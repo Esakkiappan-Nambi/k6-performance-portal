@@ -1,0 +1,161 @@
+{
+    "metrics": {
+        "vus_max": {
+            "value": 5,
+            "min": 5,
+            "max": 5
+        },
+        "http_req_tls_handshaking": {
+            "p(95)": 0,
+            "avg": 5.102140196078432,
+            "min": 0,
+            "med": 0,
+            "max": 173.2441,
+            "p(90)": 0
+        },
+        "http_req_blocked": {
+            "avg": 9.260646078431373,
+            "min": 0,
+            "med": 0,
+            "max": 311.6867,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_duration{expected_response:true}": {
+            "min": 48.4625,
+            "med": 154.023,
+            "max": 728.7738,
+            "p(90)": 282.0713,
+            "p(95)": 317.9832,
+            "avg": 169.68660099009898
+        },
+        "aggregate_response_time": {
+            "p(90)": 282.05278,
+            "p(95)": 317.29531999999983,
+            "avg": 168.0230068627451,
+            "min": 0,
+            "med": 153.2518,
+            "max": 728.7738
+        },
+        "iterations": {
+            "count": 34,
+            "rate": 1.0359224639091622
+        },
+        "data_received": {
+            "count": 1001397,
+            "rate": 30510.87198797774
+        },
+        "http_req_duration": {
+            "p(95)": 317.29531999999983,
+            "avg": 168.0230068627451,
+            "min": 0,
+            "med": 153.2518,
+            "max": 728.7738,
+            "p(90)": 282.05278
+        },
+        "http_req_waiting": {
+            "avg": 163.05959607843135,
+            "min": 0,
+            "med": 146.80145,
+            "max": 728.2816,
+            "p(90)": 282.05278,
+            "p(95)": 317.29531999999983
+        },
+        "http_req_receiving": {
+            "avg": 4.768985294117648,
+            "min": 0,
+            "med": 0,
+            "max": 56.2055,
+            "p(90)": 20.57950000000001,
+            "p(95)": 23.33554499999999
+        },
+        "checks": {
+            "passes": 135,
+            "fails": 1,
+            "value": 0.9926470588235294
+        },
+        "http_req_sending": {
+            "avg": 0.19442549019607847,
+            "min": 0,
+            "med": 0,
+            "max": 0.6558,
+            "p(90)": 0.5424000000000001,
+            "p(95)": 0.59444
+        },
+        "data_sent": {
+            "count": 20907,
+            "rate": 637.0009103808486
+        },
+        "aggregate_failure_rate": {
+            "passes": 0,
+            "fails": 102,
+            "value": 0
+        },
+        "iteration_duration": {
+            "avg": 3693.3913058823528,
+            "min": 2900.1272,
+            "med": 3038.1733999999997,
+            "max": 24419.7784,
+            "p(90)": 3215.27772,
+            "p(95)": 3425.62184
+        },
+        "http_reqs": {
+            "rate": 3.1077673917274864,
+            "count": 102
+        },
+        "http_req_failed": {
+            "passes": 1,
+            "fails": 101,
+            "value": 0.00980392156862745
+        },
+        "http_req_connecting": {
+            "avg": 4.143014705882353,
+            "min": 0,
+            "med": 0,
+            "max": 143.5707,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "vus": {
+            "max": 5,
+            "value": 1,
+            "min": 1
+        }
+    },
+    "root_group": {
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "Get All posts status 200": {
+                    "fails": 1,
+                    "name": "Get All posts status 200",
+                    "path": "::Get All posts status 200",
+                    "id": "6f5ffa21eee075e175ded4450aa8734a",
+                    "passes": 33
+                },
+                "Get All posts response time < 2000ms": {
+                    "passes": 34,
+                    "fails": 0,
+                    "name": "Get All posts response time < 2000ms",
+                    "path": "::Get All posts response time < 2000ms",
+                    "id": "95d6bb26e37fa36e526c00407081575f"
+                },
+                "Create Post status 201": {
+                    "name": "Create Post status 201",
+                    "path": "::Create Post status 201",
+                    "id": "23cc57ca9e714b012fa6693f98365962",
+                    "passes": 34,
+                    "fails": 0
+                },
+                "Create Post response time < 3000ms": {
+                    "name": "Create Post response time < 3000ms",
+                    "path": "::Create Post response time < 3000ms",
+                    "id": "a15b930acea4764ef02578bd2d23ffb7",
+                    "passes": 34,
+                    "fails": 0
+                }
+            },
+        "name": ""
+    }
+}

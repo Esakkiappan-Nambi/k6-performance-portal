@@ -1,0 +1,147 @@
+{
+    "metrics": {
+        "http_req_duration": {
+            "min": 267.29,
+            "med": 307.95605,
+            "max": 1097.5789,
+            "p(90)": 351.1277,
+            "p(95)": 361.17998,
+            "avg": 317.72759354838706
+        },
+        "http_req_blocked": {
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 2.469443951612903,
+            "min": 0,
+            "med": 0,
+            "max": 157.5605
+        },
+        "vus": {
+            "max": 5,
+            "value": 1,
+            "min": 1
+        },
+        "data_sent": {
+            "rate": 5092.590220153154,
+            "count": 102558
+        },
+        "aggregate_failure_rate": {
+            "passes": 0,
+            "fails": 248,
+            "value": 0
+        },
+        "http_req_tls_handshaking": {
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 1.4428189516129035,
+            "min": 0,
+            "med": 0,
+            "max": 87.7977
+        },
+        "http_req_receiving": {
+            "avg": 1.4886072580645169,
+            "min": 0,
+            "med": 0,
+            "max": 15.7899,
+            "p(90)": 5.045540000000001,
+            "p(95)": 7.466914999999995
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 248,
+            "value": 0
+        },
+        "http_req_duration{expected_response:true}": {
+            "med": 307.95605,
+            "max": 1097.5789,
+            "p(90)": 351.1277,
+            "p(95)": 361.17998,
+            "avg": 317.72759354838706,
+            "min": 267.29
+        },
+        "checks": {
+            "passes": 495,
+            "fails": 1,
+            "value": 0.9979838709677419
+        },
+        "http_req_sending": {
+            "avg": 0.1770060483870967,
+            "min": 0,
+            "med": 0,
+            "max": 1.1196,
+            "p(90)": 0.61569,
+            "p(95)": 0.6677499999999996
+        },
+        "iteration_duration": {
+            "avg": 1286.7635758064519,
+            "min": 1187.6452,
+            "med": 1255.4146500000002,
+            "max": 2003.7469,
+            "p(90)": 1370.1512300000002,
+            "p(95)": 1460.24644
+        },
+        "vus_max": {
+            "min": 5,
+            "max": 5,
+            "value": 5
+        },
+        "http_req_connecting": {
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.8819032258064516,
+            "min": 0,
+            "med": 0,
+            "max": 56.1555
+        },
+        "http_reqs": {
+            "count": 248,
+            "rate": 12.314615871974711
+        },
+        "aggregate_response_time": {
+            "avg": 317.72759354838706,
+            "min": 267.29,
+            "med": 307.95605,
+            "max": 1097.5789,
+            "p(90)": 351.1277,
+            "p(95)": 361.17998
+        },
+        "data_received": {
+            "count": 485500,
+            "rate": 24107.84679775694
+        },
+        "iterations": {
+            "count": 62,
+            "rate": 3.0786539679936777
+        },
+        "http_req_waiting": {
+            "avg": 316.0619802419354,
+            "min": 266.5641,
+            "med": 305.63185,
+            "max": 1097.2703,
+            "p(90)": 349.67257,
+            "p(95)": 359.84224499999993
+        }
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "status 200": {
+                    "id": "fad9fa412b86fcb03bee97c80dcd61f1",
+                    "passes": 248,
+                    "fails": 0,
+                    "name": "status 200",
+                    "path": "::status 200"
+                },
+                "response time < 1000ms": {
+                    "path": "::response time < 1000ms",
+                    "id": "20fb4e832cf064157637fa0f29b41aa6",
+                    "passes": 247,
+                    "fails": 1,
+                    "name": "response time < 1000ms"
+                }
+            }
+    }
+}

@@ -1,0 +1,134 @@
+.report-container {
+  padding: 30px;
+  background: linear-gradient(135deg, #eef2ff, #f8fafc);
+  min-height: 100vh;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.report-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 25px;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.report-header h1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.back-btn,
+.download-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  color: white;
+  transition: 0.2s;
+}
+
+.back-btn {
+  background: #2563eb;
+}
+
+.back-btn:hover {
+  background: #1d4ed8;
+}
+
+.download-btn {
+  background: #16a34a;
+}
+
+.download-btn:hover {
+  background: #15803d;
+}
+
+.report-card,
+.output-card {
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.report-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+}
+
+.status.completed {
+  background: #16a34a;
+}
+
+.status.failed {
+  background: #dc2626;
+}
+
+.status.running {
+  background: #f59e0b;
+}
+
+.aggregate-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.aggregate-table th,
+.aggregate-table td {
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.aggregate-table th {
+  background: #f1f5f9;
+  font-weight: 600;
+}
+
+.aggregate-table tr:hover {
+  background: #f8fafc;
+}
+
+.output-card pre {
+  margin-top: 10px;
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 16px;
+  border-radius: 10px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px;
+  font-size: 18px;
+  color: #475569;
+}
+
+.report-card h3,
+.output-card h3 {
+  margin-bottom: 15px;
+  color: #0f172a;
+}
