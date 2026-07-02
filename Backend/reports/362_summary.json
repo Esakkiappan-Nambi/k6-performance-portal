@@ -1,0 +1,147 @@
+{
+    "metrics": {
+        "vus": {
+            "min": 1,
+            "max": 5,
+            "value": 1
+        },
+        "vus_max": {
+            "value": 5,
+            "min": 5,
+            "max": 5
+        },
+        "aggregate_response_time": {
+            "med": 141.66995,
+            "max": 1881.7798,
+            "p(90)": 707.9577500000001,
+            "p(95)": 846.7475949999998,
+            "avg": 264.1418162878787,
+            "min": 0
+        },
+        "iteration_duration": {
+            "max": 4087.8357,
+            "p(90)": 2820.05075,
+            "p(95)": 2999.670325,
+            "avg": 2323.257422727272,
+            "min": 1538.4584,
+            "med": 2245.5272
+        },
+        "http_req_waiting": {
+            "avg": 523.141210227273,
+            "min": 283.3399,
+            "med": 445.0544,
+            "max": 1870.488,
+            "p(90)": 843.0097700000003,
+            "p(95)": 977.1720849999999
+        },
+        "http_req_duration{expected_response:true}": {
+            "med": 447.67375,
+            "max": 1881.7798,
+            "p(90)": 847.0747100000001,
+            "p(95)": 977.1720849999999,
+            "avg": 528.2836325757575,
+            "min": 283.3399
+        },
+        "http_req_blocked": {
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 11.183370454545454,
+            "min": 0,
+            "med": 0,
+            "max": 738.7949
+        },
+        "http_req_sending": {
+            "med": 0,
+            "max": 1.1745,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.020392803030303032,
+            "min": 0
+        },
+        "checks": {
+            "passes": 264,
+            "fails": 0,
+            "value": 1
+        },
+        "data_received": {
+            "count": 7799714,
+            "rate": 222793.43920901956
+        },
+        "iterations": {
+            "count": 66,
+            "rate": 1.885244380472834
+        },
+        "http_req_tls_handshaking": {
+            "med": 0,
+            "max": 436.0793,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 7.415942424242425,
+            "min": 0
+        },
+        "aggregate_failure_rate": {
+            "fails": 528,
+            "passes": 0,
+            "value": 0
+        },
+        "http_req_receiving": {
+            "max": 186.1809,
+            "p(90)": 5.182870000000002,
+            "p(95)": 8.010424999999998,
+            "avg": 5.122029545454544,
+            "min": 0,
+            "med": 0.5183500000000001
+        },
+        "http_reqs": {
+            "count": 264,
+            "rate": 7.540977521891336
+        },
+        "http_req_duration": {
+            "min": 283.3399,
+            "med": 447.67375,
+            "max": 1881.7798,
+            "p(90)": 847.0747100000001,
+            "p(95)": 977.1720849999999,
+            "avg": 528.2836325757575
+        },
+        "data_sent": {
+            "count": 76511,
+            "rate": 2185.4838302175303
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 264,
+            "value": 0
+        },
+        "http_req_connecting": {
+            "avg": 3.662700378787879,
+            "min": 0,
+            "med": 0,
+            "max": 275.0675,
+            "p(90)": 0,
+            "p(95)": 0
+        }
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "Get Request status 200": {
+                    "path": "::Get Request status 200",
+                    "id": "08111aebf1f2241b280dc421ecc07d86",
+                    "passes": 132,
+                    "fails": 0,
+                    "name": "Get Request status 200"
+                },
+                "Get Request response time < 2000ms": {
+                    "id": "6d210b838a242ac89f911a2c1689b001",
+                    "passes": 132,
+                    "fails": 0,
+                    "name": "Get Request response time < 2000ms",
+                    "path": "::Get Request response time < 2000ms"
+                }
+            }
+    }
+}

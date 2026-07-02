@@ -1,6 +1,6 @@
 import os
 import json
-from urllib.parse import urlparse, urlencode
+from urllib.parse import urlparse
 
 SCRIPT_FOLDER = "generated_scripts"
 os.makedirs(SCRIPT_FOLDER, exist_ok=True)
@@ -22,13 +22,39 @@ def generate_k6_script(
     cache_enabled=False,
     cache_clear_each_iteration=False,
     cache_max_size=75,
+    user_defined_variables=None,
     ramp_down=5,
+    schedule_enabled=False,
+    schedule=None,
 ):
     filename = f"{test_name}.js"
     filepath = os.path.join(SCRIPT_FOLDER, filename)
 
     if assertions and isinstance(assertions, str):
         assertions = json.loads(assertions)
+
+    # ── User Defined Variables Block ──────────────────────────────────────────
+    udv_init = "{}"
+    udv_list = user_defined_variables or []
+
+    if udv_list:
+        enabled_udvs = [
+            v for v in udv_list
+            if v.get("enabled", True) and v.get("name", "").strip()
+        ]
+
+        if enabled_udvs:
+            udv_pairs = []
+            for v in enabled_udvs:
+                name = v["name"].strip()
+                value = str(v.get("value", ""))
+                escaped = (
+                    value.replace("\\", "\\\\")
+                        .replace("`", "\\`")
+                        .replace("${", "\\${")
+                )
+                udv_pairs.append(f'    {name}: `{escaped}`')
+            udv_init = "{\n" + ",\n".join(udv_pairs) + "\n}"
 
     # ── CSV block ─────────────────────────────────────────────────────────────
     csv_block = ""
@@ -56,81 +82,152 @@ const csvData = new SharedArray("csvData", function () {{
     console.log("VU:", __VU, "User:", JSON.stringify(data));"""
 
     # ── Cookie block ──────────────────────────────────────────────────────────
+    # NOTE: `jar_option` (built below, per-step) is what actually wires the
+    # jar into each individual http.get / http.request call. This block just
+    # sets up the jar itself and the per-iteration clear logic.
     cookie_jar_init = ""
     cookie_iteration_clear = ""
 
     if cookie_enabled:
         base_urls = []
         seen = set()
+
         for step in scenario:
             if step.get("enabled") and step.get("url"):
                 try:
-                    p = urlparse(step["url"])
+                    p = urlparse(step["url"].strip())
                     base = f"{p.scheme}://{p.netloc}"
+
                     if base not in seen:
                         seen.add(base)
                         base_urls.append(base)
+
                 except Exception:
                     pass
 
-        cookie_jar_init = "const jar = http.cookieJar(); // HTTP Cookie Manager"
+        # Initialize cookie jar
+        cookie_jar_init = """
+    const jar = http.cookieJar(); // HTTP Cookie Manager
+    """
 
-        if cookie_clear_each_iteration and base_urls:
-            clears = "\n        ".join([f'jar.clear("{u}");' for u in base_urls])
-            cookie_iteration_clear = f"// Clear cookies (JMeter: clear each iteration)\n        {clears}"
-        elif cookie_clear_each_iteration:
-            cookie_iteration_clear = "// jar.clear('<base_url>'); // add your base URL"
-# ── ✅ NEW: Cache Manager block ───────────────────────────────────────────
-    # Simulates JMeter HTTP Cache Manager:
-    #   - Stores ETag / Last-Modified per URL per VU
-    #   - Sends If-None-Match / If-Modified-Since on repeat requests
-    #   - Honours 304 Not Modified (no body re-downloaded)
-    #   - Optional clear-each-iteration to reset cache between loops
+        # Clear cookies every iteration if enabled
+        if cookie_clear_each_iteration:
+            if base_urls:
+                clears = "\n        ".join(
+                    [f'jar.clear("{u}");' for u in base_urls]
+                )
+
+                cookie_iteration_clear = f"""
+    // Clear cookies (JMeter: clear each iteration)
+            {clears}
+    """
+            else:
+                cookie_iteration_clear = """
+    // No base URLs found for cookie clearing
+    """
+
+    # ── Cache Manager block ───────────────────────────────────────────────────
     cache_init = ""
     cache_helpers = ""
     cache_iteration_clear = ""
- 
+
     if cache_enabled:
         cache_init = f"""
-    // ── HTTP Cache Manager (JMeter equivalent) ────────────────────────────
-    // Per-VU in-memory cache: url → {{ etag, lastModified }}
-    // Max entries: {cache_max_size}
-    const __cache = {{}};
-    let __cacheSize = 0;
-    const __cacheMaxSize = {cache_max_size};
-"""
- 
+        // ── HTTP Cache Manager (JMeter equivalent) ────────────────────────────
+        const __cache = {{}};
+        let __cacheSize = 0;
+        const __cacheMaxSize = {cache_max_size};
+    """
+
         cache_helpers = """
-    // Returns conditional headers for a URL if cached
-    function getCacheHeaders(url) {
-        const entry = __cache[url];
-        if (!entry) return {};
-        const h = {};
-        if (entry.etag)         h["If-None-Match"]     = entry.etag;
-        if (entry.lastModified) h["If-Modified-Since"] = entry.lastModified;
-        return h;
-    }
- 
-    // Store cache entry from a response
-    function storeCacheEntry(url, res) {
-        const etag         = res.headers["Etag"] || res.headers["ETag"] || null;
-        const lastModified = res.headers["Last-Modified"] || null;
-        if (etag || lastModified) {
+        // Get cache headers for conditional GET
+        function getCacheHeaders(url) {
+            const entry = __cache[url];
+            if (!entry) return {};
+
+            const headers = {};
+            if (entry.etag) headers["If-None-Match"] = entry.etag;
+            if (entry.lastModified) headers["If-Modified-Since"] = entry.lastModified;
+
+            return headers;
+        }
+
+        // Store response in cache
+        function storeCacheEntry(url, res) {
+            const etag = res.headers["ETag"] || res.headers["Etag"] || null;
+            const lastModified = res.headers["Last-Modified"] || null;
+
             if (!__cache[url] && __cacheSize >= __cacheMaxSize) {
-                // evict oldest entry when full
-                const oldest = Object.keys(__cache)[0];
-                delete __cache[oldest];
+                const oldestKey = Object.keys(__cache)[0];
+                delete __cache[oldestKey];
                 __cacheSize--;
             }
+
             if (!__cache[url]) __cacheSize++;
-            __cache[url] = { etag, lastModified };
+
+            __cache[url] = {
+                etag: etag,
+                lastModified: lastModified,
+                body: res.body,
+                status: res.status
+            };
         }
-    }
-"""
+
+        // Return cached response if 304
+        function getCachedResponse(url) {
+            return __cache[url] || null;
+        }
+    """
+
         if cache_clear_each_iteration:
-            cache_iteration_clear = """// Clear cache each iteration (JMeter: clear each iteration)
-        Object.keys(__cache).forEach(k => delete __cache[k]);
-        __cacheSize = 0;"""
+            cache_iteration_clear = """
+            // Clear cache each iteration
+            Object.keys(__cache).forEach(key => delete __cache[key]);
+            __cacheSize = 0;
+    """
+
+    # ── Schedule metadata block ───────────────────────────────────────────────
+    schedule_comment = ""
+    schedule_start_check = ""
+    schedule_end_check = ""
+
+    if schedule_enabled and schedule:
+        start_time = schedule.get("startTime")
+        end_time   = schedule.get("endTime")
+        frequency  = schedule.get("frequency", "once")
+
+        if start_time:
+            schedule_comment = (
+                f"// Scheduled Test | "
+                f"Frequency: {frequency} | "
+                f"Start: {start_time}"
+            )
+
+            # Ensure the datetime string ends with seconds for JS Date()
+            start_iso = start_time if start_time.endswith("Z") else start_time + ":00"
+
+            schedule_start_check = f"""
+        // Scheduler: wait until start time
+        const scheduleStart = new Date("{start_iso}").getTime();
+        if (Date.now() < scheduleStart) {{
+            const waitMs = scheduleStart - Date.now();
+            console.log("Waiting until scheduled start:", "{start_iso}");
+            sleep(waitMs / 1000);
+        }}
+"""
+
+        if end_time:
+            schedule_comment += f" | End: {end_time}"
+            end_iso = end_time if end_time.endswith("Z") else end_time + ":00"
+
+            schedule_end_check = f"""
+        // Scheduler: stop after end time
+        const scheduleEnd = new Date("{end_iso}").getTime();
+        if (Date.now() > scheduleEnd) {{
+            console.log("Schedule expired. Stopping test.");
+            return;
+        }}
+"""
 
     # ── Variable extraction registry ──────────────────────────────────────────
     extracted_vars = []
@@ -139,48 +236,76 @@ const csvData = new SharedArray("csvData", function () {{
             extracted_vars.append(step["variableName"])
 
     def replace_vars(text):
-        """Replace {{varName}} → ${variables.varName} for JS template literals."""
         if not text:
             return text
-        for var in extracted_vars:
-            text = text.replace(f"{{{{{var}}}}}", f"${{variables.{var}}}")
+
+        all_vars = extracted_vars[:]
+
+        if user_defined_variables:
+            all_vars.extend([
+                v["name"].strip()
+                for v in user_defined_variables
+                if v.get("enabled", True)
+            ])
+
+        for var in all_vars:
+            text = text.replace(
+                f"{{{{{var}}}}}",
+                f"${{variables.{var}}}"
+            )
+
         return text
 
-    # ── Build per-step request code ───────────────────────────────────────────
+    # ── Build per-step request code ─────────────────────────────────────────────
+    # IMPORTANT: every line below stays inside this `for` loop. A previous
+    # version of this function had the HTTP-call-building block dedented to
+    # function level, which silently ended the loop early and meant `requests`
+    # never accumulated anything per step. All per-step logic now lives at one
+    # consistent indentation level inside the loop.
     requests = ""
+
+    # `jar_option` gets spliced into every request's config object (GET, cached
+    # GET, and non-GET) whenever the Cookie Manager is enabled. This is what
+    # was previously missing — the jar was created but never actually attached
+    # to any http.get()/http.request() call, so cookies were never sent/stored.
+    jar_option = "jar: jar," if cookie_enabled else ""
 
     for index, step in enumerate(scenario):
         if not step.get("enabled"):
             continue
 
         response_var = f"res_{index}"
-        method = step.get("method", "GET").upper()
-        raw_url = step.get("url", "")
-        name = step.get("name", f"Request {index + 1}")
-        headers = step.get("headers", "")
-        body = step.get("body", "")
+        method       = step.get("method", "GET").upper()
+        raw_url      = step.get("url", "")
+        name         = step.get("name", f"Request {index + 1}")
+        headers      = step.get("headers", "")
+        body         = step.get("body", "")
 
-        # ── ✅ NEW: Build GET params query string ─────────────────────────────
-        # Collect only enabled params with non-empty names
-        params_list = step.get("params") or []
+        # ── Retry config ──────────────────────────────────────────────────────
+        retry_cfg        = step.get("retry") or {}
+        retry_enabled    = retry_cfg.get("enabled", False)
+        max_retries      = int(retry_cfg.get("maxRetries", 3))
+        retry_delay      = int(retry_cfg.get("retryDelay", 1000))
+        retry_on_codes   = retry_cfg.get("retryOn", [500, 502, 503])
+        retry_on_timeout = retry_cfg.get("retryOnTimeout", True)
+
+        # ── Build GET params query string ─────────────────────────────────────
+        params_list    = step.get("params") or []
         enabled_params = [
             p for p in params_list
             if p.get("enabled", True) and p.get("name", "").strip()
         ]
 
         if method == "GET" and enabled_params:
-            # Build JS template-literal query string so variable refs work
             qs_parts = []
             for p in enabled_params:
-                p_name = p.get("name", "").strip()
+                p_name  = p.get("name", "").strip()
                 p_value = replace_vars(p.get("value", ""))
-                # encode the name (static), value may contain JS variable refs
                 encoded_name = p_name.replace(" ", "+")
                 qs_parts.append(f"{encoded_name}=${{encodeURIComponent(`{p_value}`)}}")
 
             query_string = "&".join(qs_parts)
 
-            # Append to URL — handle existing ? in base URL
             if "?" in raw_url:
                 full_url = f"`{replace_vars(raw_url)}&{query_string}`"
             else:
@@ -188,38 +313,60 @@ const csvData = new SharedArray("csvData", function () {{
         else:
             full_url = f"`{replace_vars(raw_url)}`"
 
-        # --- Parse & merge headers ---
+        # ── Parse & merge headers ─────────────────────────────────────────────
         headers_obj = {}
+
         if headers:
             try:
-                headers_obj = json.loads(headers)
+                if isinstance(headers, str):
+                    parsed_headers = json.loads(headers)
+                    if isinstance(parsed_headers, dict):
+                        headers_obj = parsed_headers
+                    else:
+                        headers_obj = {}
+                elif isinstance(headers, dict):
+                    headers_obj = headers
+
                 headers_obj = {
                     k: replace_vars(v) if isinstance(v, str) else v
                     for k, v in headers_obj.items()
                 }
+
             except Exception as e:
                 print("Header parse error:", e)
+                headers_obj = {}
 
-        # For non-GET: merge Content-Type
         if method != "GET":
+            if not isinstance(headers_obj, dict):
+                headers_obj = {}
             merged = {"Content-Type": "application/json"}
             merged.update(headers_obj)
             headers_obj = merged
 
-        # --- Parse body ---
+        # ── Parse body ────────────────────────────────────────────────────────
         body_obj = None
         if body:
             try:
-                body_obj = json.loads(body)
-                body_obj = {
-                    k: replace_vars(v) if isinstance(v, str) else v
-                    for k, v in body_obj.items()
-                }
+                if isinstance(body, str):
+                    parsed_body = json.loads(body)
+                    if isinstance(parsed_body, dict):
+                        body_obj = parsed_body
+                    else:
+                        body_obj = parsed_body
+                elif isinstance(body, dict):
+                    body_obj = body
+
+                if isinstance(body_obj, dict):
+                    body_obj = {
+                        k: replace_vars(v) if isinstance(v, str) else v
+                        for k, v in body_obj.items()
+                    }
+
             except Exception as e:
                 print("Body parse error:", e)
+                body_obj = body
 
-        # --- Build JS expressions ---
-        # Headers literal
+        # ── Build JS literals ─────────────────────────────────────────────────
         header_parts = []
         for k, v in headers_obj.items():
             if isinstance(v, str):
@@ -231,38 +378,116 @@ const csvData = new SharedArray("csvData", function () {{
                 header_parts.append(f'  "{k}": {json.dumps(v)}')
         headers_literal = "{\n" + ",\n".join(header_parts) + "\n}" if header_parts else "{}"
 
-        # Body literal
         if body_obj is not None:
-            body_parts = []
-            for k, v in body_obj.items():
-                if isinstance(v, str):
-                    if any(f"${{variables.{var}}}" in v for var in extracted_vars):
-                        body_parts.append(f'  "{k}": `{v}`')
+            if isinstance(body_obj, dict):
+                body_parts = []
+                for k, v in body_obj.items():
+                    if isinstance(v, str):
+                        body_parts.append(f'"{k}": "{v}"')
                     else:
-                        body_parts.append(f'  "{k}": "{v}"')
-                else:
-                    body_parts.append(f'  "{k}": {json.dumps(v)}')
-            body_literal = "JSON.stringify({\n" + ",\n".join(body_parts) + "\n})"
+                        body_parts.append(f'"{k}": {json.dumps(v)}')
+                body_literal = "JSON.stringify({\n" + ",\n".join(body_parts) + "\n})"
+            else:
+                body_literal = json.dumps(str(body_obj))
+        elif body:
+            # body existed but JSON parsing failed earlier — body_literal
+            # was already set to a safe string literal above
+            pass
         else:
             body_literal = "null"
 
-        # --- Emit HTTP call ---
+        # ── Build HTTP call expression ───────────────────────────────────────
+        # FIX 1 (Cookie Manager): `jar_option` is now spliced into the request
+        # config object in ALL THREE branches below (plain GET, cached GET,
+        # non-GET), so enabling the Cookie Manager actually attaches the jar
+        # to every request k6 sends instead of doing nothing.
+        #
+        # FIX 2 (Cache Manager): the cached-GET branch previously produced
+        # invalid JS — an IIFE that was never invoked (missing trailing `()`),
+        # a `headers: { ... }` object opened in the wrong place, and a
+        # `mergedHeaders` variable that was referenced but never declared.
+        # It's rewritten below as a self-invoking arrow function that builds
+        # the URL once, merges cache-conditional headers with the configured
+        # headers via Object.assign, and returns the response — and it is
+        # actually called via the trailing `()`.
         if method == "GET":
+            if cache_enabled:
+                http_call = f"""(() => {{
+            const __url_{index} = {full_url};
+            const __cacheHeaders_{index} = getCacheHeaders(__url_{index});
+            const __mergedHeaders_{index} = Object.assign({{}}, {headers_literal}, __cacheHeaders_{index});
+            const __response_{index} = http.get(__url_{index}, {{
+                headers: __mergedHeaders_{index},
+                {jar_option}
+            }});
+            storeCacheEntry(__url_{index}, __response_{index});
+            return __response_{index};
+        }})()"""
+            else:
+                http_call = f"""http.get({full_url}, {{
+            headers: {headers_literal},
+            {jar_option}
+        }})"""
+        else:
+            http_call = f"""http.request(
+        "{method}",
+        {full_url},
+        {body_literal},
+        {{ headers: {headers_literal}, {jar_option} }}
+    )"""
+
+        # ── Emit request block (with optional retry wrapper) ──────────────────
+        if retry_enabled:
+            retry_codes_js      = json.dumps(retry_on_codes)
+            retry_on_timeout_js = "true" if retry_on_timeout else "false"
+
             requests += f"""
-        // ── {name} ──
-        let {response_var} = http.get({full_url}, {{
-            headers: {headers_literal}
-        }});
+        // ── {name} (with retry logic) ──
+        let {response_var};
+        {{
+            const __retryCodes_{index} = {retry_codes_js};
+            const __maxRetries_{index} = {max_retries};
+            const __retryDelay_{index} = {retry_delay};
+            const __retryOnTimeout_{index} = {retry_on_timeout_js};
+
+            for (let __attempt_{index} = 0; __attempt_{index} <= __maxRetries_{index}; __attempt_{index}++) {{
+                try {{
+                    {response_var} = {http_call};
+
+                    if (!__retryCodes_{index}.includes({response_var}.status)) {{
+                        if (__attempt_{index} > 0) {{
+                            console.log("Retry succeeded for {name} on attempt", __attempt_{index} + 1);
+                        }}
+                        break;
+                    }}
+
+                    if (__attempt_{index} < __maxRetries_{index}) {{
+                        console.warn(
+                            "Retrying {name} (attempt", __attempt_{index} + 1, "of", __maxRetries_{index},
+                            ") — status:", {response_var}.status
+                        );
+                        sleep(__retryDelay_{index} / 1000);
+                    }} else {{
+                        console.error("{name} failed after", __maxRetries_{index}, "retries — status:", {response_var}.status);
+                    }}
+                }} catch (__err_{index}) {{
+                    if (__retryOnTimeout_{index} && __attempt_{index} < __maxRetries_{index}) {{
+                        console.warn(
+                            "Retrying {name} after error (attempt", __attempt_{index} + 1, "):", __err_{index}.message
+                        );
+                        sleep(__retryDelay_{index} / 1000);
+                    }} else {{
+                        console.error("{name} network error after retries:", __err_{index}.message);
+                        throw __err_{index};
+                    }}
+                }}
+            }}
+        }}
 """
         else:
             requests += f"""
         // ── {name} ──
-        let {response_var} = http.request(
-            "{method}",
-            {full_url},
-            {body_literal},
-            {{ headers: {headers_literal} }}
-        );
+        let {response_var} = {http_call};
 """
 
         requests += f"""
@@ -280,7 +505,26 @@ const csvData = new SharedArray("csvData", function () {{
         }}
 """
 
-        # --- Think time ---
+        # ── Variable extraction ─────────────────────────────────────────────
+        if step.get("extractVariable") and step.get("variableName"):
+            var_name = step["variableName"].strip()
+            json_path = step.get("jsonPath", "").strip()
+
+            if json_path:
+                if json_path.startswith("$."):
+                    json_path = json_path[2:]
+
+                requests += f"""
+        // Extract variable: {var_name}
+        try {{
+            variables.{var_name} = {response_var}.json("{json_path}");
+            console.log("Extracted {var_name} =", variables.{var_name});
+        }} catch (e) {{
+            console.warn("Failed to extract {var_name} from path {json_path}:", e.message);
+        }}
+"""
+
+        # ── Think time ────────────────────────────────────────────────────────
         think_time = step.get("thinkTime") if step.get("thinkTime") is not None else step.get("think_time")
         if think_time:
             try:
@@ -290,29 +534,12 @@ const csvData = new SharedArray("csvData", function () {{
             except Exception:
                 pass
 
-        # --- Variable extraction ---
-        if step.get("extractVariable"):
-            var_name = step.get("variableName")
-            json_path = step.get("jsonPath", "")
-            if json_path.startswith("$."):
-                json_path = json_path[2:]
-
-            requests += f"""
-        try {{
-            variables.{var_name} = {response_var}.json("{json_path}");
-            console.log("Extracted {var_name}:", variables.{var_name});
-        }} catch (err) {{
-            console.log("Extraction failed for {var_name}:", err);
-        }}
-"""
-
-        # --- Per-step assertions ---
-        # --- Per-step assertions (numeric) ---
+        # ── Per-step assertions ───────────────────────────────────────────────
         step_assertions = step.get("assertions", {})
         if step_assertions and step_assertions.get("enabled"):
             status_code = step_assertions.get("status_code", 200)
             max_rt      = step_assertions.get("max_response_time", 500)
- 
+
             if status_code or max_rt:
                 requests += f"""
         check({response_var}, {{
@@ -320,29 +547,25 @@ const csvData = new SharedArray("csvData", function () {{
             "{name} response time < {max_rt}ms": (r) => r.timings.duration <= {max_rt}
         }});
 """
- 
-            # ✅ NEW: Text / Response assertions (JMeter Response Assertion equivalent)
+
             text_assertions = step_assertions.get("text_assertions", [])
             if text_assertions:
                 check_lines = []
                 for ta in text_assertions:
-                    field     = ta.get("field", "body")       # body | status_text | headers
+                    field     = ta.get("field", "body")
                     condition = ta.get("condition", "contains")
                     value     = ta.get("value", "").replace('"', '\\"')
                     label     = f"{name} — {field} {condition} '{value}'"
- 
-                    # Map field to k6 response property
+
                     if field == "body":
                         field_expr = "r.body"
                     elif field == "status_text":
                         field_expr = "r.status_text"
                     elif field == "headers":
-                        # headers is an object — stringify for text matching
                         field_expr = "JSON.stringify(r.headers)"
                     else:
                         field_expr = "r.body"
- 
-                    # Map condition to JS expression
+
                     if condition == "contains":
                         expr = f'({field_expr} || "").includes("{value}")'
                     elif condition == "not_contains":
@@ -354,21 +577,20 @@ const csvData = new SharedArray("csvData", function () {{
                     elif condition == "ends_with":
                         expr = f'({field_expr} || "").endsWith("{value}")'
                     elif condition == "matches_regex":
-                        # value is a regex pattern — don't wrap in quotes
                         expr = f'new RegExp("{value}").test({field_expr} || "")'
                     else:
                         expr = f'({field_expr} || "").includes("{value}")'
- 
+
                     check_lines.append(f'            "{label}": (r) => {expr}')
- 
+
                 checks_block = ",\n".join(check_lines)
                 requests += f"""
         check({response_var}, {{
 {checks_block}
         }});
 """
- 
-        # --- Global assertions fallback (if no per-step) ---
+
+        # ── Global assertions fallback ────────────────────────────────────────
         elif assertions:
             status_code = assertions.get("status_code", 200)
             max_rt      = assertions.get("max_response_time", 500)
@@ -379,42 +601,41 @@ const csvData = new SharedArray("csvData", function () {{
         }});
 """
 
-
     # ── Assemble final script ─────────────────────────────────────────────────
-    script = f"""{csv_block}
-
-import http from "k6/http";
-import {{ sleep, check }} from "k6";
+    script = f"""import http from "k6/http";
+import {{ check, sleep }} from "k6";
 import {{ Trend, Counter, Rate }} from "k6/metrics";
+{csv_block}
 
+const aggregateResponseTime = new Trend("aggregate_response_time", true);
+const aggregateErrors       = new Counter("aggregate_errors");
+const aggregateFailureRate  = new Rate("aggregate_failure_rate");
 
-const aggregateResponseTime = new Trend("aggregate_response_time");
-const aggregateErrors = new Counter("aggregate_errors");
-const aggregateFailureRate = new Rate("aggregate_failure_rate");
+{cache_init}
+{cache_helpers}
 
 export const options = {{
     stages: [
-        {{ duration: "{ramp_up}s", target: {users} }},   // ramp-up
-        {{ duration: "{duration}s", target: {users} }},  // hold load
-        {{ duration: "{ramp_down}s", target: 0 }}        // ramp-down
-    ]
+        {{ duration: "{ramp_up}s", target: {users} }},
+        {{ duration: "{duration}s", target: {users} }},
+        {{ duration: "{ramp_down}s", target: 0 }},
+    ],
 }};
 
 export default function () {{
-    let variables = {{}};   // shared variable bag (JWT tokens, etc.)
+    {schedule_comment}
+    const variables = {udv_init};
     {cookie_jar_init}
-    {csv_data_access}
+
+    {schedule_start_check}
+    {schedule_end_check}
 
     for (let i = 0; i < {loop_count}; i++) {{
-{requests}
         {cookie_iteration_clear}
+        {cache_iteration_clear}
+        {csv_data_access}
+{requests}
     }}
-}}
-
-export function handleSummary(data) {{
-    return {{
-        "summary.json": JSON.stringify(data, null, 2),
-    }};
 }}
 """
 
@@ -740,8 +961,8 @@ def generate_pdf_report(run_id, test_name, metrics, output):
         ("BACKGROUND",    (0, 4), (-1, 4),  colors.white),
         # Highlight failed row in red if failures exist
         *([("TEXTCOLOR", (1, 3), (1, 3), colors.HexColor("#dc2626")),
-           ("FONTNAME",  (1, 3), (1, 3), "Helvetica-Bold")]
-          if failed_req > 0 else []),
+        ("FONTNAME",  (1, 3), (1, 3), "Helvetica-Bold")]
+        if failed_req > 0 else []),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#e5e7eb")),
     ]))
     elements.append(req_table)
@@ -757,3 +978,7 @@ def generate_pdf_report(run_id, test_name, metrics, output):
 
     doc.build(elements)
     return report_path
+
+
+
+ 

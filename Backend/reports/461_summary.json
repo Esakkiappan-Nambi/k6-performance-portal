@@ -1,0 +1,147 @@
+{
+    "metrics": {
+        "http_req_sending": {
+            "avg": 0.16189937499999998,
+            "min": 0,
+            "med": 0,
+            "max": 0.8375,
+            "p(90)": 0.59455,
+            "p(95)": 0.7051599999999998
+        },
+        "checks": {
+            "passes": 313,
+            "fails": 7,
+            "value": 0.978125
+        },
+        "data_received": {
+            "count": 334195,
+            "rate": 13987.022201331498
+        },
+        "aggregate_failure_rate": {
+            "fails": 160,
+            "passes": 0,
+            "value": 0
+        },
+        "http_req_duration": {
+            "avg": 537.839003125,
+            "min": 281.8223,
+            "med": 386.61145,
+            "max": 8254.2603,
+            "p(90)": 771.9588899999999,
+            "p(95)": 909.8655349999998
+        },
+        "aggregate_response_time": {
+            "max": 8254.2603,
+            "p(90)": 771.9588899999999,
+            "p(95)": 909.8655349999998,
+            "avg": 537.839003125,
+            "min": 281.8223,
+            "med": 386.61145
+        },
+        "http_req_connecting": {
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 8.143085625000001,
+            "min": 0,
+            "med": 0,
+            "max": 1047.9713
+        },
+        "vus_max": {
+            "value": 5,
+            "min": 5,
+            "max": 5
+        },
+        "data_sent": {
+            "count": 82196,
+            "rate": 3440.1390710831815
+        },
+        "http_req_blocked": {
+            "p(95)": 0,
+            "avg": 11.052028125,
+            "min": 0,
+            "med": 0,
+            "max": 1119.0613,
+            "p(90)": 0
+        },
+        "iteration_duration": {
+            "avg": 2201.6900449999994,
+            "min": 1319.8125,
+            "med": 1822.8652000000002,
+            "max": 9714.0213,
+            "p(90)": 2714.63721,
+            "p(95)": 3613.2806599999963
+        },
+        "iterations": {
+            "count": 40,
+            "rate": 1.6741150766865451
+        },
+        "http_req_tls_handshaking": {
+            "med": 0,
+            "max": 129.9604,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 2.7185075,
+            "min": 0
+        },
+        "http_reqs": {
+            "count": 160,
+            "rate": 6.6964603067461805
+        },
+        "http_req_receiving": {
+            "med": 1.5123,
+            "max": 1932.5386,
+            "p(90)": 303.28517,
+            "p(95)": 400.9059099999997,
+            "avg": 91.80374187500001,
+            "min": 0
+        },
+        "vus": {
+            "max": 5,
+            "value": 1,
+            "min": 1
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 537.839003125,
+            "min": 281.8223,
+            "med": 386.61145,
+            "max": 8254.2603,
+            "p(90)": 771.9588899999999,
+            "p(95)": 909.8655349999998
+        },
+        "http_req_waiting": {
+            "avg": 445.87336187499994,
+            "min": 274.0518,
+            "med": 352.98400000000004,
+            "max": 8253.6863,
+            "p(90)": 501.9829599999997,
+            "p(95)": 691.7470149999999
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 160,
+            "value": 0
+        }
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "status 200": {
+                    "path": "::status 200",
+                    "id": "fad9fa412b86fcb03bee97c80dcd61f1",
+                    "passes": 160,
+                    "fails": 0,
+                    "name": "status 200"
+                },
+                "response time < 1000ms": {
+                    "path": "::response time < 1000ms",
+                    "id": "20fb4e832cf064157637fa0f29b41aa6",
+                    "passes": 153,
+                    "fails": 7,
+                    "name": "response time < 1000ms"
+                }
+            }
+    }
+}

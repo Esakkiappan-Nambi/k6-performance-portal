@@ -1,0 +1,147 @@
+{
+    "metrics": {
+        "http_req_sending": {
+            "p(95)": 0.6481849999999999,
+            "avg": 0.3882578125,
+            "min": 0,
+            "med": 0.46230000000000004,
+            "max": 0.9889,
+            "p(90)": 0.59885
+        },
+        "http_req_blocked": {
+            "min": 0,
+            "med": 0,
+            "max": 351.3013,
+            "p(90)": 0,
+            "p(95)": 105.88328999999997,
+            "avg": 15.1545
+        },
+        "aggregate_response_time": {
+            "med": 267.83230000000003,
+            "max": 736.1637,
+            "p(90)": 282.97495,
+            "p(95)": 287.620475,
+            "avg": 268.55942812499995,
+            "min": 221.6732
+        },
+        "http_req_connecting": {
+            "avg": 6.289446875,
+            "min": 0,
+            "med": 0,
+            "max": 152.8614,
+            "p(90)": 0,
+            "p(95)": 39.44565999999998
+        },
+        "vus_max": {
+            "max": 5,
+            "value": 5,
+            "min": 5
+        },
+        "iterations": {
+            "count": 32,
+            "rate": 1.5965922654005742
+        },
+        "data_sent": {
+            "count": 17707,
+            "rate": 883.464351357749
+        },
+        "aggregate_failure_rate": {
+            "passes": 0,
+            "fails": 64,
+            "value": 0
+        },
+        "data_received": {
+            "rate": 3279.101152083017,
+            "count": 65722
+        },
+        "http_req_tls_handshaking": {
+            "p(90)": 0,
+            "p(95)": 66.43763,
+            "avg": 8.805228125000001,
+            "min": 0,
+            "med": 0,
+            "max": 196.7144
+        },
+        "http_req_waiting": {
+            "p(90)": 282.44651,
+            "p(95)": 286.03791,
+            "avg": 267.4476968750001,
+            "min": 221.2235,
+            "med": 267.17639999999994,
+            "max": 736.1637
+        },
+        "http_req_duration": {
+            "avg": 268.55942812499995,
+            "min": 221.6732,
+            "med": 267.83230000000003,
+            "max": 736.1637,
+            "p(90)": 282.97495,
+            "p(95)": 287.620475
+        },
+        "vus": {
+            "value": 2,
+            "min": 1,
+            "max": 5
+        },
+        "iteration_duration": {
+            "med": 2543.9963,
+            "max": 3127.788,
+            "p(90)": 2729.04113,
+            "p(95)": 2950.5260399999997,
+            "avg": 2568.946428125,
+            "min": 2450.9795
+        },
+        "http_reqs": {
+            "count": 64,
+            "rate": 3.1931845308011484
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 64,
+            "value": 0
+        },
+        "http_req_duration{expected_response:true}": {
+            "max": 736.1637,
+            "p(90)": 282.97495,
+            "p(95)": 287.620475,
+            "avg": 268.55942812499995,
+            "min": 221.6732,
+            "med": 267.83230000000003
+        },
+        "http_req_receiving": {
+            "avg": 0.7234734375000001,
+            "min": 0,
+            "med": 0,
+            "max": 9.8825,
+            "p(90)": 2.462430000000005,
+            "p(95)": 5.64176
+        },
+        "checks": {
+            "passes": 64,
+            "fails": 64,
+            "value": 0.5
+        }
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "Create Post Request status 200": {
+                    "name": "Create Post Request status 200",
+                    "path": "::Create Post Request status 200",
+                    "id": "d8104ffde5fd0a7507d7b605e8b579d1",
+                    "passes": 0,
+                    "fails": 64
+                },
+                "Create Post Request response time < 3000ms": {
+                    "fails": 0,
+                    "name": "Create Post Request response time < 3000ms",
+                    "path": "::Create Post Request response time < 3000ms",
+                    "id": "b5a28845d2b33f226160b04276f4a826",
+                    "passes": 64
+                }
+            }
+    }
+}

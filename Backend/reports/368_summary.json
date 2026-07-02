@@ -1,0 +1,147 @@
+{
+    "metrics": {
+        "aggregate_failure_rate": {
+            "passes": 0,
+            "fails": 72,
+            "value": 0
+        },
+        "http_req_blocked": {
+            "p(90)": 0,
+            "p(95)": 211.3997350000003,
+            "avg": 18.165354166666663,
+            "min": 0,
+            "med": 0,
+            "max": 302.9652
+        },
+        "http_reqs": {
+            "rate": 3.396178756453771,
+            "count": 72
+        },
+        "vus": {
+            "value": 1,
+            "min": 1,
+            "max": 5
+        },
+        "vus_max": {
+            "min": 5,
+            "max": 5,
+            "value": 5
+        },
+        "iteration_duration": {
+            "p(90)": 2418.8889,
+            "p(95)": 2564.173725,
+            "avg": 2271.8217222222224,
+            "min": 2095.0054,
+            "med": 2288.9507999999996,
+            "max": 2598.3279
+        },
+        "iterations": {
+            "count": 36,
+            "rate": 1.6980893782268855
+        },
+        "http_req_sending": {
+            "avg": 0.24679861111111112,
+            "min": 0,
+            "med": 0.32730000000000004,
+            "max": 0.7664,
+            "p(90)": 0.54323,
+            "p(95)": 0.66917
+        },
+        "aggregate_response_time": {
+            "min": 44.6722,
+            "med": 139.35755,
+            "max": 152.5155,
+            "p(90)": 147.78248,
+            "p(95)": 149.721475,
+            "avg": 116.6022666666667
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 72,
+            "value": 0
+        },
+        "http_req_duration": {
+            "avg": 116.6022666666667,
+            "min": 44.6722,
+            "med": 139.35755,
+            "max": 152.5155,
+            "p(90)": 147.78248,
+            "p(95)": 149.721475
+        },
+        "http_req_receiving": {
+            "avg": 0.6652027777777777,
+            "min": 0,
+            "med": 0,
+            "max": 6.7289,
+            "p(90)": 2.3806899999999995,
+            "p(95)": 4.7923
+        },
+        "data_received": {
+            "count": 73906,
+            "rate": 3486.083155201006
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 116.6022666666667,
+            "min": 44.6722,
+            "med": 139.35755,
+            "max": 152.5155,
+            "p(90)": 147.78248,
+            "p(95)": 149.721475
+        },
+        "http_req_connecting": {
+            "avg": 8.108379166666667,
+            "min": 0,
+            "med": 0,
+            "max": 141.0585,
+            "p(90)": 0,
+            "p(95)": 79.39648000000025
+        },
+        "http_req_tls_handshaking": {
+            "avg": 9.439890277777778,
+            "min": 0,
+            "med": 0,
+            "max": 161.9067,
+            "p(90)": 0,
+            "p(95)": 107.56670000000017
+        },
+        "checks": {
+            "passes": 144,
+            "fails": 0,
+            "value": 1
+        },
+        "http_req_waiting": {
+            "min": 37.9631,
+            "med": 138.77185,
+            "max": 152.5155,
+            "p(90)": 147.47827999999998,
+            "p(95)": 148.79924,
+            "avg": 115.6902652777778
+        },
+        "data_sent": {
+            "count": 11744,
+            "rate": 553.9544904971262
+        }
+    },
+    "root_group": {
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "Get User Requests status 200": {
+                    "name": "Get User Requests status 200",
+                    "path": "::Get User Requests status 200",
+                    "id": "4326b0f239934a404fd7fe941b89346f",
+                    "passes": 72,
+                    "fails": 0
+                },
+                "Get User Requests response time < 500ms": {
+                    "fails": 0,
+                    "name": "Get User Requests response time < 500ms",
+                    "path": "::Get User Requests response time < 500ms",
+                    "id": "edbda7b2fa918f34371ab430794db92e",
+                    "passes": 72
+                }
+            },
+        "name": ""
+    }
+}
