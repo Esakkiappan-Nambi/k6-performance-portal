@@ -72,7 +72,7 @@ function Dashboard() {
 
         <h2>
           <LayoutDashboard size={22} />
-          K6 Portal
+          Cogni k6
         </h2>
 
         <ul>

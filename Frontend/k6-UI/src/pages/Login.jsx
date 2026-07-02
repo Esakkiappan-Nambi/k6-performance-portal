@@ -52,7 +52,7 @@ function Login() {
     <div className="login-container">
       <div className="login-card">
 
-        <h1>K6 Performance Portal</h1>
+        <h1>Cogni k6 Portal</h1>
         <p className="subtitle">Login to continue</p>
 
         <form onSubmit={handleLogin}>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import {FileText,BarChart3,Download,ArrowLeft,} from "lucide-react";
+import {FileText,BarChart3,Download,ArrowLeft} from "lucide-react";
 import "./Report.css";
 import { toast } from "react-toastify";
 
@@ -83,13 +83,9 @@ const fetchReport = async () => {
           Performance Test Aggregate Report
         </h1>
 
-        <button
-          className="download-btn"
-          onClick={downloadReport}
-        >
-          <Download size={18} />
-          Download
-        </button>
+        <button className="download-btn"
+          onClick={downloadReport} > <Download size={18} />
+          Download </button>
       </div>
 
       {/* Summary */}

@@ -6,6 +6,7 @@
   min-height: 100vh;
   background: #f8fafc;
   padding: 35px;
+  
   font-family: "Segoe UI", sans-serif;
 }
 
@@ -14,12 +15,13 @@
 ================================== */
 
 .run-header {
-  margin-bottom: 25px;
+  margin-top: -40px;
   text-align:center;
 }
 
 
 .run-header h2 {
+  margin-bottom: 5px;
   font-size: 30px;
   font-weight: 700;
   color: #0f172a;
@@ -38,6 +40,34 @@
 
   box-shadow:
     0 4px 20px rgba(15, 23, 42, 0.05);
+}
+
+/* Add these styles */
+
+.stop-btn {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 110px;
+}
+
+.stop-btn:hover {
+  background: #b91c1c;
+  transform: translateY(-2px);
+}
+
+.stop-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 /* ==================================
@@ -82,7 +112,7 @@
   display: inline-block;
 
   padding: 6px 14px;
-
+  background-color: #0f172a;
   border-radius: 999px;
   display: inline-block;
   font-size: 12px;
@@ -167,7 +197,7 @@
 }
 
 /* ==================================
-   LOADING
+  LOADING
 ================================== */
 
 .loading-box {
@@ -184,7 +214,6 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-
   min-width: 110px;
 }
 
@@ -248,5 +277,55 @@
 
   .test-table {
     min-width: 900px;
+  }
+}
+
+
+/* ==================================
+   SEARCH
+================================== */
+
+.search-container {
+  margin-top: 15px;
+  display: flex;
+  align-items:center;
+  flex:1;
+  justify-content: center;
+}
+
+.search-box {
+  position: relative;
+  /* justify-content: center; */
+  width: 100%;
+  max-width: 420px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 16px 12px 46px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 15px;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+}
+
+@media (max-width: 900px) {
+  .search-container {
+    margin-top: 15px;
   }
 }
