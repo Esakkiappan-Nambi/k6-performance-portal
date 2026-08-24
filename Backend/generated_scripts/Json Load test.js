@@ -1,42 +1,49 @@
-
-
 import http from "k6/http";
-import { sleep, check } from "k6";
+import { check, sleep } from "k6";
 import { Trend, Counter, Rate } from "k6/metrics";
 
 
-const aggregateResponseTime = new Trend("aggregate_response_time");
-const aggregateErrors = new Counter("aggregate_errors");
-const aggregateFailureRate = new Rate("aggregate_failure_rate");
+const aggregateResponseTime = new Trend("aggregate_response_time", true);
+const aggregateErrors       = new Counter("aggregate_errors");
+const aggregateFailureRate  = new Rate("aggregate_failure_rate");
+
+
+
 
 export const options = {
     stages: [
-        { duration: "10s", target: 5 },   // ramp-up
-        { duration: "15s", target: 5 },  // hold load
-        { duration: "5s", target: 0 }        // ramp-down
-    ]
+        { duration: "10s", target: 5 },
+        { duration: "15s", target: 5 },
+        { duration: "5s", target: 0 },
+    ],
 };
 
 export default function () {
-    let variables = {};   // shared variable bag (JWT tokens, etc.)
+    
+    const variables = {};
+    
+
     
     
 
     for (let i = 0; i < 1; i++) {
+        
+        
+        
 
         // ── Create Post ──
         let res_0 = http.request(
-            "POST",
-            `https://jsonplaceholder.typicode.com/posts`,
-            JSON.stringify({
-  "title": "Load Test Post",
-  "body": "Created during k6 test",
-  "userId": 1
+        "POST",
+        `https://jsonplaceholder.typicode.com/posts`,
+        JSON.stringify({
+"title": "Load Test Post",
+"body": "Created during k6 test",
+"userId": 1
 }),
-            { headers: {
+        { headers: {
   "Content-Type": "application/json"
-} }
-        );
+},  }
+    );
 
         console.log("Request: Create Post");
         console.log("Status:", res_0.status);
@@ -59,7 +66,8 @@ export default function () {
 
         // ── Get All posts ──
         let res_1 = http.get(`https://jsonplaceholder.typicode.com/posts?Limit=${encodeURIComponent(`_limit=5`)}&Page=${encodeURIComponent(`_page=1`)}`, {
-            headers: {}
+            headers: {},
+            
         });
 
         console.log("Request: Get All posts");
@@ -83,7 +91,8 @@ export default function () {
 
         // ── Get Single Post ──
         let res_2 = http.get(`https://jsonplaceholder.typicode.com/posts/1`, {
-            headers: {}
+            headers: {},
+            
         });
 
         console.log("Request: Get Single Post");
@@ -98,21 +107,15 @@ export default function () {
         } else {
             aggregateFailureRate.add(false);
         }
-        sleep(500 / 1000);
 
+        // Extract variable: postId
         try {
             variables.postId = res_2.json("id");
-            console.log("Extracted postId:", variables.postId);
-        } catch (err) {
-            console.log("Extraction failed for postId:", err);
+            console.log("Extracted postId =", variables.postId);
+        } catch (e) {
+            console.warn("Failed to extract postId from path id:", e.message);
         }
+        sleep(500 / 1000);
 
-        
     }
-}
-
-export function handleSummary(data) {
-    return {
-        "summary.json": JSON.stringify(data, null, 2),
-    };
 }

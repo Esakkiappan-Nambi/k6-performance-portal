@@ -1,0 +1,143 @@
+{
+    "root_group": {
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "User defined Get test status 200": {
+                    "name": "User defined Get test status 200",
+                    "path": "::User defined Get test status 200",
+                    "id": "884a487faa6a17d492519c6527c85452",
+                    "passes": 0,
+                    "fails": 75
+                },
+                "User defined Get test response time < 2000ms": {
+                    "passes": 74,
+                    "fails": 1,
+                    "name": "User defined Get test response time < 2000ms",
+                    "path": "::User defined Get test response time < 2000ms",
+                    "id": "27de6954bbda25fa6d6705b4a7465255"
+                }
+            },
+        "name": "",
+        "path": ""
+    },
+    "metrics": {
+        "http_req_sending": {
+            "max": 3.0068,
+            "p(90)": 0.69404,
+            "p(95)": 0.74348,
+            "avg": 0.42863866666666667,
+            "min": 0,
+            "med": 0.4285
+        },
+        "aggregate_failure_rate": {
+            "passes": 75,
+            "fails": 0,
+            "value": 1
+        },
+        "iterations": {
+            "count": 75,
+            "rate": 2.909788490849955
+        },
+        "http_req_connecting": {
+            "avg": 2.07944,
+            "min": 0,
+            "med": 0,
+            "max": 34.3305,
+            "p(90)": 0,
+            "p(95)": 27.563979999999997
+        },
+        "aggregate_errors": {
+            "count": 75,
+            "rate": 2.909788490849955
+        },
+        "http_req_tls_handshaking": {
+            "avg": 4.0831333333333335,
+            "min": 0,
+            "med": 0,
+            "max": 82.4565,
+            "p(90)": 0,
+            "p(95)": 51.46248
+        },
+        "vus_max": {
+            "value": 5,
+            "min": 5,
+            "max": 5
+        },
+        "http_req_waiting": {
+            "avg": 399.57983333333334,
+            "min": 231.7451,
+            "med": 270.5703,
+            "max": 2039.2912,
+            "p(90)": 745.1832400000001,
+            "p(95)": 1140.16653
+        },
+        "vus": {
+            "value": 1,
+            "min": 1,
+            "max": 5
+        },
+        "http_req_blocked": {
+            "avg": 6.673638666666666,
+            "min": 0,
+            "med": 0,
+            "max": 153.6843,
+            "p(90)": 0,
+            "p(95)": 79.03009
+        },
+        "iteration_duration": {
+            "p(90)": 1740.41678,
+            "p(95)": 2131.87016,
+            "avg": 1399.1002626666668,
+            "min": 1221.0745,
+            "med": 1263.3014,
+            "max": 3035.5338
+        },
+        "http_req_duration": {
+            "avg": 402.141108,
+            "min": 231.7451,
+            "med": 273.2009,
+            "max": 2045.5707,
+            "p(90)": 750.81424,
+            "p(95)": 1142.0071300000002
+        },
+        "data_sent": {
+            "count": 11820,
+            "rate": 458.5826661579529
+        },
+        "http_req_receiving": {
+            "p(90)": 7.022740000000009,
+            "p(95)": 8.26149,
+            "avg": 2.1326359999999998,
+            "min": 0,
+            "med": 0,
+            "max": 11.6105
+        },
+        "checks": {
+            "passes": 74,
+            "fails": 76,
+            "value": 0.49333333333333335
+        },
+        "data_received": {
+            "count": 141166,
+            "rate": 5476.842694657663
+        },
+        "aggregate_response_time": {
+            "avg": 402.141108,
+            "min": 231.7451,
+            "med": 273.2009,
+            "max": 2045.5707,
+            "p(90)": 750.81424,
+            "p(95)": 1142.0071300000002
+        },
+        "http_reqs": {
+            "count": 75,
+            "rate": 2.909788490849955
+        },
+        "http_req_failed": {
+            "passes": 75,
+            "fails": 0,
+            "value": 1
+        }
+    }
+}

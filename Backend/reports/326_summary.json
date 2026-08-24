@@ -1,0 +1,259 @@
+{
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "Get Posts-body check status 200": {
+                    "path": "::Get Posts-body check status 200",
+                    "id": "b10dc2f292ae35e1bbd09ddcd263c4d3",
+                    "passes": 27,
+                    "fails": 0,
+                    "name": "Get Posts-body check status 200"
+                },
+                "Get Posts-body check response time < 3000ms": {
+                    "name": "Get Posts-body check response time < 3000ms",
+                    "path": "::Get Posts-body check response time < 3000ms",
+                    "id": "ca045eadc8216bee7a21e085327154a0",
+                    "passes": 27,
+                    "fails": 0
+                },
+                "Get Posts-body check — body contains 'userId'": {
+                    "id": "4acff4eb199fdceb28f11e238b2e8585",
+                    "passes": 27,
+                    "fails": 0,
+                    "name": "Get Posts-body check — body contains 'userId'",
+                    "path": "::Get Posts-body check — body contains 'userId'"
+                },
+                "Get Posts-body check — body contains 'title'": {
+                    "name": "Get Posts-body check — body contains 'title'",
+                    "path": "::Get Posts-body check — body contains 'title'",
+                    "id": "3d85883a92653783f0d274e735d1cc60",
+                    "passes": 27,
+                    "fails": 0
+                },
+                "Get Posts-body check — body not_contains 'error'": {
+                    "fails": 0,
+                    "name": "Get Posts-body check — body not_contains 'error'",
+                    "path": "::Get Posts-body check — body not_contains 'error'",
+                    "id": "ee713c81232b1c504de160920fc09ef9",
+                    "passes": 27
+                },
+                "Get User-Status Text Check status 200": {
+                    "name": "Get User-Status Text Check status 200",
+                    "path": "::Get User-Status Text Check status 200",
+                    "id": "7a14ed614d25985ad6eecdd3b35eb16a",
+                    "passes": 27,
+                    "fails": 0
+                },
+                "Get User-Status Text Check response time < 2998ms": {
+                    "name": "Get User-Status Text Check response time < 2998ms",
+                    "path": "::Get User-Status Text Check response time < 2998ms",
+                    "id": "2c1ba8a32852c3796a4830081d5b2a50",
+                    "passes": 27,
+                    "fails": 0
+                },
+                "Get User-Status Text Check — body contains 'Leanne Graham'": {
+                    "name": "Get User-Status Text Check — body contains 'Leanne Graham'",
+                    "path": "::Get User-Status Text Check — body contains 'Leanne Graham'",
+                    "id": "d58f76000ad6b09f1e4e592618aedc7b",
+                    "passes": 27,
+                    "fails": 0
+                },
+                "Get User-Status Text Check — status_text equals 'OK'": {
+                    "name": "Get User-Status Text Check — status_text equals 'OK'",
+                    "path": "::Get User-Status Text Check — status_text equals 'OK'",
+                    "id": "329d8bc27e7bdf18d247b079eeaf8271",
+                    "passes": 0,
+                    "fails": 27
+                },
+                "Create Post - Body Check status 200": {
+                    "passes": 0,
+                    "fails": 27,
+                    "name": "Create Post - Body Check status 200",
+                    "path": "::Create Post - Body Check status 200",
+                    "id": "19549c8bfb79560dd0fa5bf7da392ec1"
+                },
+                "Create Post - Body Check response time < 3000ms": {
+                    "name": "Create Post - Body Check response time < 3000ms",
+                    "path": "::Create Post - Body Check response time < 3000ms",
+                    "id": "5f509abe9cc60f4720da863d354a09f3",
+                    "passes": 27,
+                    "fails": 0
+                },
+                "Create Post - Body Check — body contains 'Test Post'": {
+                    "fails": 0,
+                    "name": "Create Post - Body Check — body contains 'Test Post'",
+                    "path": "::Create Post - Body Check — body contains 'Test Post'",
+                    "id": "1e58067e2690ceaccddda66f2bdde541",
+                    "passes": 27
+                },
+                "Create Post - Body Check — body contains 'id'": {
+                    "name": "Create Post - Body Check — body contains 'id'",
+                    "path": "::Create Post - Body Check — body contains 'id'",
+                    "id": "467ed0718fee852f3a46fce9bb32a44e",
+                    "passes": 27,
+                    "fails": 0
+                },
+                "Create Post - Body Check — body not_contains 'error'": {
+                    "name": "Create Post - Body Check — body not_contains 'error'",
+                    "path": "::Create Post - Body Check — body not_contains 'error'",
+                    "id": "f353308f9b6582791e82050981069db4",
+                    "passes": 27,
+                    "fails": 0
+                },
+                "Get Comments - Headers Check status 200": {
+                    "fails": 0,
+                    "name": "Get Comments - Headers Check status 200",
+                    "path": "::Get Comments - Headers Check status 200",
+                    "id": "ef53cfa5e33b633f4c48d17a584ce03e",
+                    "passes": 27
+                },
+                "Get Comments - Headers Check response time < 3000ms": {
+                    "name": "Get Comments - Headers Check response time < 3000ms",
+                    "path": "::Get Comments - Headers Check response time < 3000ms",
+                    "id": "bc4a52947dfae4e6621d9e1acf1457bb",
+                    "passes": 27,
+                    "fails": 0
+                },
+                "Get Comments - Headers Check — body contains 'application/json'": {
+                    "path": "::Get Comments - Headers Check — body contains 'application/json'",
+                    "id": "b57a5d0fde33f2203c58bfb050874da3",
+                    "passes": 0,
+                    "fails": 27,
+                    "name": "Get Comments - Headers Check — body contains 'application/json'"
+                },
+                "Get Comments - Headers Check — body matches_regex 'd+'": {
+                    "path": "::Get Comments - Headers Check — body matches_regex 'd+'",
+                    "id": "cc4fb753977b7159293e3e4cfc329a09",
+                    "passes": 27,
+                    "fails": 0,
+                    "name": "Get Comments - Headers Check — body matches_regex 'd+'"
+                }
+            }
+    },
+    "metrics": {
+        "checks": {
+            "passes": 405,
+            "fails": 81,
+            "value": 0.8333333333333334
+        },
+        "data_received": {
+            "count": 122173,
+            "rate": 5781.071098236001
+        },
+        "http_req_connecting": {
+            "avg": 4.3305740740740735,
+            "min": 0,
+            "med": 0,
+            "max": 137.915,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 108,
+            "value": 0
+        },
+        "http_req_sending": {
+            "avg": 0.41721759259259245,
+            "min": 0,
+            "med": 0.5172,
+            "max": 1.208,
+            "p(90)": 0.7535,
+            "p(95)": 0.785635
+        },
+        "vus_max": {
+            "max": 5,
+            "value": 5,
+            "min": 5
+        },
+        "aggregate_failure_rate": {
+            "passes": 0,
+            "fails": 108,
+            "value": 0
+        },
+        "vus": {
+            "value": 1,
+            "min": 1,
+            "max": 5
+        },
+        "http_req_receiving": {
+            "p(95)": 4.218049999999996,
+            "avg": 0.5910277777777779,
+            "min": 0,
+            "med": 0,
+            "max": 12.8213,
+            "p(90)": 2.1042199999999998
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 145.2307787037037,
+            "min": 38.7948,
+            "med": 131.69305,
+            "max": 730.654,
+            "p(90)": 246.34514999999993,
+            "p(95)": 274.284655
+        },
+        "http_req_tls_handshaking": {
+            "avg": 5.393463888888889,
+            "min": 0,
+            "med": 0,
+            "max": 148.4063,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "aggregate_response_time": {
+            "avg": 145.2307787037037,
+            "min": 38.7948,
+            "med": 131.69305,
+            "max": 730.654,
+            "p(90)": 246.34514999999993,
+            "p(95)": 274.284655
+        },
+        "data_sent": {
+            "count": 15429,
+            "rate": 730.080672281791
+        },
+        "iterations": {
+            "count": 27,
+            "rate": 1.2776056874462607
+        },
+        "http_req_duration": {
+            "p(95)": 274.284655,
+            "avg": 145.2307787037037,
+            "min": 38.7948,
+            "med": 131.69305,
+            "max": 730.654,
+            "p(90)": 246.34514999999993
+        },
+        "http_req_blocked": {
+            "max": 286.1875,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 10.046113888888888,
+            "min": 0,
+            "med": 0
+        },
+        "http_req_waiting": {
+            "avg": 144.22253333333333,
+            "min": 38.2692,
+            "med": 131.06315,
+            "max": 728.0597,
+            "p(90)": 245.72495999999992,
+            "p(95)": 274.104265
+        },
+        "iteration_duration": {
+            "avg": 3124.817925925926,
+            "min": 2901.4675,
+            "med": 3126.5009,
+            "max": 3568.9971,
+            "p(90)": 3425.9824200000003,
+            "p(95)": 3458.8626
+        },
+        "http_reqs": {
+            "count": 108,
+            "rate": 5.110422749785043
+        }
+    }
+}

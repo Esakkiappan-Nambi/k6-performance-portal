@@ -55,7 +55,7 @@ return (
     <div className="register-container">
     <div className="register-card">
 
-        <h1>K6 Performance Portal</h1>
+        <h1>Cogni k6 portal</h1>
         <p className="subtitle">Create Your Account</p>
 
         <form onSubmit={handleRegister}>

@@ -1,11 +1,12 @@
 annotated-doc==0.0.4
 annotated-types==0.7.0
 anyio==4.13.0
-bcrypt==5.0.0
+bcrypt==4.1.2
 click==8.4.1
 colorama==0.4.6
 dnspython==2.8.0
 ecdsa==0.19.2
+python-dotenv==1.1.1
 email-validator==2.3.0
 fastapi==0.136.3
 greenlet==3.5.1
@@ -19,6 +20,9 @@ pydantic_core==2.46.4
 python-jose==3.5.0
 python-multipart==0.0.32
 rsa==4.9.1
+requests==2.32.5
+reportlab==4.4.3
+apscheduler==3.11.0
 six==1.17.0
 SQLAlchemy==2.0.50
 starlette==1.2.1

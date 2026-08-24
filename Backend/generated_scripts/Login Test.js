@@ -1,68 +1,64 @@
-
-
-import { SharedArray } from "k6/data";
-
-const csvData = new SharedArray("csvData", function () {
-    return open("uploaded_csv\a5d2f020-77dc-4f94-9aae-5e9960f961dc_Book 4(Sheet1).csv")
-        .split("\n")
-        .slice(1)
-        .map(line => {
-            const cols = line.split(",");
-
-            return {
-                email: cols[0], password: cols[1]
-            };
-        });
-});
-
-
 import http from "k6/http";
-import { sleep, check } from "k6";
-
-export const options = {
-    stages: [
-        {
-            duration: "5s",
-            target: 5
-        },
-        {
-            duration: "20s",
-            target: 5
-        },
-        {
-            duration: "10s",
-            target: 0
-        }
-    ]
-};
-
-export default function () {
+    import { check, sleep } from "k6";
+    import { Trend, Counter, Rate } from "k6/metrics";
     
-    const data = csvData[__VU % csvData.length];
 
+    const aggregateResponseTime = new Trend("aggregate_response_time", true);
+    const aggregateErrors       = new Counter("aggregate_errors");
+    const aggregateFailureRate  = new Rate("aggregate_failure_rate");
 
-    for (let i = 0; i < 1; i++) {
+    
+    
+
+    export const options = {
+        stages: [
+            { duration: "5s", target: 5 },
+            { duration: "10s", target: 5 },
+            { duration: "5s", target: 0 },
+        ],
+    };
+
+    export default function () {
         
-        let res = http.request(
+        const variables = {};
+        
+
+        
+        
+
+        for (let i = 0; i < 1; i++) {
+            // Cookie Manager disabled - clearing cookies each iteration
+  
+            
+    // Cache disabled
+    
+            
+    
+        // ── POST 1 / 1 ──
+        let res_0 = http.request(
             "POST",
-            "https://reqres.in/api/login"
+            `https://demowebshop.tricentis.com/addproducttocart/catalog/2/1/1`,
+            JSON.stringify({
+
+}),
+            { headers: {
+  "Content-Type": "application/json"
+} }
         );
 
-        check(res, {
-            "status check": (r) => r.status === 200,
-            "response time check": (r) => r.timings.duration <= 1000
-        });
+        console.log("Request: POST 1 / 1");
+        console.log("Status:", res_0.status);
+        console.log("Body:", res_0.body);
 
-        let res = http.request(
-            "GET",
-            "https://reqres.in/api/users?page=2"
-        );
+        aggregateResponseTime.add(res_0.timings.duration);
 
-        check(res, {
-            "status check": (r) => r.status === 200,
-            "response time check": (r) => r.timings.duration <= 1000
-        });
+        if (res_0.status >= 400) {
+            aggregateErrors.add(1);
+            aggregateFailureRate.add(true);
+        } else {
+            aggregateFailureRate.add(false);
+        }
 
-        sleep(1);
+        }
     }
-}
+    

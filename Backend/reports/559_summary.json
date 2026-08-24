@@ -1,0 +1,147 @@
+{
+    "metrics": {
+        "http_req_sending": {
+            "avg": 0.553228125,
+            "min": 0,
+            "med": 0.4651,
+            "max": 4.5535,
+            "p(90)": 0.7329500000000002,
+            "p(95)": 1.5989799999999945
+        },
+        "http_req_duration": {
+            "p(90)": 335.49036,
+            "p(95)": 353.57861,
+            "avg": 293.4658750000001,
+            "min": 230.1388,
+            "med": 282.45624999999995,
+            "max": 731.79
+        },
+        "data_sent": {
+            "count": 17707,
+            "rate": 852.3197501489658
+        },
+        "iterations": {
+            "count": 32,
+            "rate": 1.5403079010993903
+        },
+        "http_req_receiving": {
+            "min": 0,
+            "med": 0,
+            "max": 13.3774,
+            "p(90)": 4.57710000000001,
+            "p(95)": 6.900229999999995,
+            "avg": 1.0749328125
+        },
+        "data_received": {
+            "count": 65539,
+            "rate": 3154.6949853172796
+        },
+        "http_req_connecting": {
+            "avg": 4.71960625,
+            "min": 0,
+            "med": 0,
+            "max": 133.7896,
+            "p(90)": 0,
+            "p(95)": 39.92420499999999
+        },
+        "aggregate_failure_rate": {
+            "passes": 0,
+            "fails": 64,
+            "value": 0
+        },
+        "http_reqs": {
+            "count": 64,
+            "rate": 3.0806158021987806
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 64,
+            "value": 0
+        },
+        "iteration_duration": {
+            "p(90)": 2726.92292,
+            "p(95)": 2764.195715,
+            "avg": 2614.304531249999,
+            "min": 2461.2157,
+            "med": 2574.5781500000003,
+            "max": 3130.9318
+        },
+        "http_req_waiting": {
+            "avg": 291.8377140625,
+            "min": 225.7689,
+            "med": 281.33304999999996,
+            "max": 723.4368,
+            "p(90)": 334.63408000000004,
+            "p(95)": 352.72647
+        },
+        "http_req_tls_handshaking": {
+            "avg": 7.180642187499999,
+            "min": 0,
+            "med": 0,
+            "max": 143.7283,
+            "p(90)": 0,
+            "p(95)": 62.902379999999944
+        },
+        "vus": {
+            "max": 5,
+            "value": 2,
+            "min": 1
+        },
+        "vus_max": {
+            "max": 5,
+            "value": 5,
+            "min": 5
+        },
+        "aggregate_response_time": {
+            "avg": 293.4658750000001,
+            "min": 230.1388,
+            "med": 282.45624999999995,
+            "max": 731.79,
+            "p(90)": 335.49036,
+            "p(95)": 353.57861
+        },
+        "http_req_duration{expected_response:true}": {
+            "min": 230.1388,
+            "med": 282.45624999999995,
+            "max": 731.79,
+            "p(90)": 335.49036,
+            "p(95)": 353.57861,
+            "avg": 293.4658750000001
+        },
+        "checks": {
+            "passes": 64,
+            "fails": 64,
+            "value": 0.5
+        },
+        "http_req_blocked": {
+            "avg": 12.499210937500001,
+            "min": 0,
+            "med": 0,
+            "max": 277.5179,
+            "p(90)": 0,
+            "p(95)": 103.44768499999994
+        }
+    },
+    "root_group": {
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "Create Post Request status 200": {
+                    "id": "d8104ffde5fd0a7507d7b605e8b579d1",
+                    "passes": 0,
+                    "fails": 64,
+                    "name": "Create Post Request status 200",
+                    "path": "::Create Post Request status 200"
+                },
+                "Create Post Request response time < 3000ms": {
+                    "path": "::Create Post Request response time < 3000ms",
+                    "id": "b5a28845d2b33f226160b04276f4a826",
+                    "passes": 64,
+                    "fails": 0,
+                    "name": "Create Post Request response time < 3000ms"
+                }
+            },
+        "name": "",
+        "path": ""
+    }
+}

@@ -1,0 +1,12 @@
+# Environment files
+.env
+.env.*
+*.env
+backend/.env
+frontend/.env
+
+# Optional but recommended
+node_modules/
+dist/
+build/
+.DS_Store

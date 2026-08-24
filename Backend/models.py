@@ -54,6 +54,10 @@ class Test(Base):
     cache_enabled              = Column(Boolean, default=False)
     cache_clear_each_iteration = Column(Boolean, default=False)
     cache_max_size             = Column(Integer, default=75)
+    udv_enabled = Column(Boolean, default=False)
+    user_defined_variables = Column(Text, nullable=True)
+    schedule_enabled = Column(Boolean, default=False)
+    schedule         = Column(Text, nullable=True)   # stores JSON string
     user_id = Column(Integer, ForeignKey("users.id"))
     
 class TestRun(Base):
@@ -61,22 +65,13 @@ class TestRun(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    test_id = Column(
-        Integer,
-        ForeignKey("tests.id")
-    )
+    test_id = Column(Integer,ForeignKey("tests.id"))
 
-    status = Column(
-        String,
-        default="Running"
-    )
+    status = Column(String,default="Running")
 
     output = Column(Text)
 
-    started_at = Column(
-        TIMESTAMP,
-        server_default=func.now()
-    )
+    started_at = Column(TIMESTAMP,server_default=func.now())
     user_id = Column(Integer, ForeignKey("users.id"))
 
 class Report(Base):

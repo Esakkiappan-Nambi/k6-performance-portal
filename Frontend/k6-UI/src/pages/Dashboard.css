@@ -54,6 +54,7 @@ body{
 
 .logout-menu{
   margin-top:50px;
+  background-color: #9f0d0d;
 }
 
 /* Main */
@@ -222,6 +223,7 @@ tr:hover{
   background:#1d4ed8;
 }
 
+
 .empty{
   text-align:center;
   padding:30px;
@@ -265,3 +267,4 @@ tr:hover{
     grid-template-columns:1fr;
   }
 }
+

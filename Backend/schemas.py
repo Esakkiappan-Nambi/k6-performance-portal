@@ -20,7 +20,10 @@ class ScenarioStep(BaseModel):
     method: str
     url: str
     enabled: bool = True
-
+class AssertionSchema(BaseModel):
+    status_code: int
+    max_response_time: int
+    max_error_rate: float
 
 class TestCreate(BaseModel):
 
@@ -65,7 +68,3 @@ class Report(Base):
     output = Column(Text)
     
     
-class AssertionSchema(BaseModel):
-    status_code: int
-    max_response_time: int
-    max_error_rate: float

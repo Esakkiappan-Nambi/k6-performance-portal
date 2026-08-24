@@ -11,6 +11,7 @@ import History from "./pages/History";
 import ReportList from "./pages/ReportList";
 import Report from "./pages/Report";
 import ProtectedRoute from "./pages/ProtectedRoute";
+import AutoCapture from "./pages/AutoCapture.jsx";
 
 function App() {
   return (
@@ -33,8 +34,9 @@ function App() {
   {/* <Route path="/reports" element={<ReportList />} /> */}
 
       <Route path="/createtest/:id?" element={<ProtectedRoute><CreateTest /></ProtectedRoute>} />
-      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      </Routes>
+      {/* <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} /> */}
+      <Route path="/AutoCapture" element={<ProtectedRoute><AutoCapture/></ProtectedRoute>} />
+    </Routes>
     </BrowserRouter>
   );
 }
