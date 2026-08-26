@@ -1,12 +1,13 @@
-# Environment files
-.env
-.env.*
-*.env
-backend/.env
-frontend/.env
+# Temporary summary files
+summary_*.json
 
-# Optional but recommended
+# Other common unwanted files
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
 node_modules/
-dist/
-build/
 .DS_Store
+sonar-project.properties
+semgrep-report.json
