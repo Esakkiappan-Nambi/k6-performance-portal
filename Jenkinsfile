@@ -82,7 +82,7 @@ pipeline {
             steps {
                 withCredentials([
                     string(
-                        credentialsId: '118e514b2ba4979fe9aa2db4b63d7c58f7',
+                        credentialsId: 'squ_fdf6f82fbbc93b264907ffe614e633f4cde47559',
                         variable: 'SONAR_TOKEN'
                     )
                 ]) {
