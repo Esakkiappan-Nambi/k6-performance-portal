@@ -3,7 +3,7 @@ pipeline {
 
     // ---- Configure these per environment ----
     environment {
-        SONAR_HOST_URL   = 'http://your-sonarqube-server:9000'
+        SONAR_HOST_URL   = 'http://localhost:9000/'
         SONAR_TOKEN      = credentials('118e514b2ba4979fe9aa2db4b63d7c58f7')      // Jenkins credential ID
         SONAR_PROJECT_KEY = "k6"
         REPORT_DIR       = 'security-reports'
