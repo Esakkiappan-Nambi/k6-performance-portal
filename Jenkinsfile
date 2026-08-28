@@ -1,12 +1,10 @@
 pipeline {
     agent any
 
-    // ---- Configure these per environment ----
     environment {
-        SONAR_HOST_URL   = 'http://localhost:9000/'
-        SONAR_TOKEN      = credentials('118e514b2ba4979fe9aa2db4b63d7c58f7')      // Jenkins credential ID
-        SONAR_PROJECT_KEY = "k6"
-        REPORT_DIR       = 'security-reports'
+        SONAR_HOST_URL    = 'http://localhost:9000'
+        SONAR_PROJECT_KEY = 'k6'
+        REPORT_DIR        = 'security-reports'
     }
 
     options {
@@ -24,48 +22,81 @@ pipeline {
 
         stage('Prepare Report Dir') {
             steps {
-                sh 'rm -rf ${REPORT_DIR} && mkdir -p ${REPORT_DIR}'
+                sh '''
+                    rm -rf "${REPORT_DIR}"
+                    mkdir -p "${REPORT_DIR}"
+                '''
             }
         }
 
-        // ---------------- SEMGREP (SAST) ----------------
+        stage('Check Tools') {
+            steps {
+                sh '''
+                    echo "Checking required tools..."
+
+                    git --version || true
+                    python3 --version || true
+                    pip --version || true
+                    sonar-scanner --version || true
+                    trivy --version || true
+                    semgrep --version || true
+
+                    echo "Workspace:"
+                    pwd
+                    ls -la
+                '''
+            }
+        }
+
         stage('Semgrep Scan') {
             steps {
                 sh '''
+                    echo "Starting Semgrep scan..."
+
                     pip install --break-system-packages --quiet semgrep || true
-                    semgrep --config=auto --json \
-                        --output=${REPORT_DIR}/semgrep-report.json . || true
+
+                    semgrep \
+                        --config=auto \
+                        --json \
+                        --output="${REPORT_DIR}/semgrep-report.json" \
+                        . || true
                 '''
             }
         }
 
-        // ---------------- TRIVY (deps / IaC / container) ----------------
         stage('Trivy Scan') {
             steps {
                 sh '''
-                    # Filesystem scan - works for any repo regardless of language
-                    trivy fs --scanners vuln,secret,misconfig \
-                        --format json \
-                        --output ${REPORT_DIR}/trivy-report.json . || true
+                    echo "Starting Trivy scan..."
 
-                    # Optional: if you build a Docker image in an earlier stage,
-                    # also scan the image itself:
-                    # trivy image --format json --output ${REPORT_DIR}/trivy-image-report.json myapp:${BUILD_NUMBER} || true
+                    trivy fs \
+                        --scanners vuln,secret,misconfig \
+                        --format json \
+                        --output "${REPORT_DIR}/trivy-report.json" \
+                        . || true
                 '''
             }
         }
 
-        // ---------------- SONARQUBE (code quality + security) ----------------
         stage('SonarQube Scan') {
             steps {
-                withSonarQubeEnv('SonarQubeServer') {   // name configured in Jenkins > Manage Jenkins > System
-                    sh '''
-                        sonar-scanner \
-                          -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                          -Dsonar.sources=. \
-                          -Dsonar.host.url=${SONAR_HOST_URL} \
-                          -Dsonar.login=${SONAR_TOKEN}
-                    '''
+                withCredentials([
+                    string(
+                        credentialsId: '118e514b2ba4979fe9aa2db4b63d7c58f7',
+                        variable: 'SONAR_TOKEN'
+                    )
+                ]) {
+                    withSonarQubeEnv('SonarQubeServer') {
+                        sh '''
+                            echo "Starting SonarQube scan..."
+
+                            sonar-scanner \
+                                -Dsonar.projectKey="${SONAR_PROJECT_KEY}" \
+                                -Dsonar.sources=. \
+                                -Dsonar.host.url="${SONAR_HOST_URL}" \
+                                -Dsonar.token="${SONAR_TOKEN}"
+                        '''
+                    }
                 }
             }
         }
@@ -78,39 +109,60 @@ pipeline {
             }
         }
 
-        stage('Fetch SonarQube Issues (JSON)') {
+        stage('Fetch SonarQube Issues') {
             steps {
-                sh '''
-                    curl -s -u ${SONAR_TOKEN}: \
-                      "${SONAR_HOST_URL}/api/issues/search?componentKeys=${SONAR_PROJECT_KEY}&ps=500" \
-                      -o ${REPORT_DIR}/sonarqube-report.json
-                '''
+                withCredentials([
+                    string(
+                        credentialsId: '118e514b2ba4979fe9aa2db4b63d7c58f7',
+                        variable: 'SONAR_TOKEN'
+                    )
+                ]) {
+                    sh '''
+                        echo "Fetching SonarQube issues..."
+
+                        curl --fail --silent --show-error \
+                            -u "${SONAR_TOKEN}:" \
+                            "${SONAR_HOST_URL}/api/issues/search?componentKeys=${SONAR_PROJECT_KEY}&ps=500" \
+                            -o "${REPORT_DIR}/sonarqube-report.json"
+                    '''
+                }
             }
         }
 
-        // ---------------- CONSOLIDATED PDF ----------------
         stage('Generate PDF Report') {
             steps {
                 sh '''
+                    echo "Generating PDF report..."
+
                     pip install --break-system-packages --quiet fpdf2 || true
-                    python3 generate_report.py ${REPORT_DIR}
+
+                    python3 generate_report.py "${REPORT_DIR}"
                 '''
             }
         }
 
         stage('Archive Reports') {
             steps {
-                archiveArtifacts artifacts: "${REPORT_DIR}/*", fingerprint: true
+                archiveArtifacts(
+                    artifacts: "${REPORT_DIR}/*",
+                    fingerprint: true,
+                    allowEmptyArchive: true
+                )
             }
         }
     }
 
     post {
         always {
-            echo "Security scan pipeline finished. See archived artifacts for JSON + PDF reports."
+            echo 'Security scan pipeline finished. See archived artifacts for JSON + PDF reports.'
         }
+
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+
         failure {
-            echo "Pipeline failed — check stage logs above."
+            echo 'Pipeline failed — check the stage logs above.'
         }
     }
 }
