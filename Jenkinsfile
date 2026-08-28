@@ -5,7 +5,7 @@ pipeline {
     environment {
         SONAR_HOST_URL   = 'http://your-sonarqube-server:9000'
         SONAR_TOKEN      = credentials('sonarqube-token')      // Jenkins credential ID
-        SONAR_PROJECT_KEY = "${env.JOB_NAME}"
+        SONAR_PROJECT_KEY = " sqp_f9a565f5755d24fd442bdc0e8f912f423814adcc"
         REPORT_DIR       = 'security-reports'
     }
 
