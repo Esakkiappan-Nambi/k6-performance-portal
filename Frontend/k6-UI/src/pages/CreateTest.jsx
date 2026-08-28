@@ -1,6 +1,10 @@
 import { useNavigate, useParams } from "react-router-dom";
 import React, { useState, useEffect, useRef } from "react";
+<<<<<<< HEAD
 import { GripVertical, Clock, Globe, Zap, Edit3, Info, Play, ChevronDown, ChevronUp, Search, Link2, Loader2, AlertCircle } from "lucide-react";
+=======
+import { GripVertical, Clock, Globe, Zap, Edit3, Info, Play, ChevronDown, ChevronUp, Search } from "lucide-react";
+>>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
 import API from "../services/api";
 import { FilePlus, PlayCircle, ArrowLeft, Plus, Trash2, Copy } from "lucide-react";
 import { toast } from "react-toastify";
@@ -156,6 +160,7 @@ function CreateTest() {
     inject_auth: false,
   });
 
+<<<<<<< HEAD
   // ── NEW: Swagger / OpenAPI import state ───────────────────────────────────
   // Mirrors the "Auto Capture" state above, but the source of steps is a
   // swagger.json / openapi.json URL instead of a live browser capture.
@@ -166,6 +171,8 @@ function CreateTest() {
   const [selectedApiIndexes, setSelectedApiIndexes] = useState(new Set());
   const [importingApis, setImportingApis] = useState(false);
 
+=======
+>>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
   // ── Step Preview state (JMeter "View Results Tree" style) ────────────────
   // stepPreviews: { [stepId]: { loading, error, expanded, response, extractedValue, viewMode, searchTerm } }
   const [stepPreviews, setStepPreviews] = useState({});
@@ -346,6 +353,7 @@ function CreateTest() {
     toast.success(`${normalised.length} step(s) imported into scenario builder`);
   };
 
+<<<<<<< HEAD
   // ── NEW: Swagger / OpenAPI import handlers ────────────────────────────────
   // Same shape as the Auto Capture handlers above: discover -> select ->
   // import into the manual scenario builder.
@@ -446,6 +454,8 @@ function CreateTest() {
     }
   };
 
+=======
+>>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
   // ── Form helpers ──────────────────────────────────────────────────────────
 
   const updateSchedule = (field, value) =>
@@ -786,9 +796,12 @@ function CreateTest() {
         <button type="button" className={`mode-tab ${mode === "auto" ? "mode-tab--active" : ""}`} onClick={() => setMode("auto")}>
           <Zap size={15} /> Auto Capture from URL
         </button>
+<<<<<<< HEAD
         <button type="button" className={`mode-tab ${mode === "swagger" ? "mode-tab--active" : ""}`} onClick={() => setMode("swagger")}>
           <Link2 size={15} /> Import from Swagger
         </button>
+=======
+>>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
       </div>
 
       {mode === "auto" && (
@@ -888,6 +901,7 @@ function CreateTest() {
         </div>
       )}
 
+<<<<<<< HEAD
       {/* ── NEW: Import from Swagger / OpenAPI ─────────────────────────────
           Same discover → select → import flow as Auto Capture above, but the
           source is a swagger.json / openapi.json URL instead of a live
@@ -987,6 +1001,8 @@ function CreateTest() {
         </div>
       )}
 
+=======
+>>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
       {mode === "manual" && (
         <form className="create-form" onSubmit={handleSubmit}>
           <p className="section-label">Test configuration</p>

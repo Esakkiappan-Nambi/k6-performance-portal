@@ -96,7 +96,11 @@ def _is_api_request(url: str, resource_type: str, method: str = "GET") -> bool:
     Generic across any site:
       - xhr / fetch              → always captured
       - document GET             → captured (page navigations are real
+<<<<<<< HEAD
                                 user-journey steps on multi-page sites)
+=======
+                                    user-journey steps on multi-page sites)
+>>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
       - document POST/PUT/etc.   → always captured (form submits)
       - static assets            → skipped via SKIP_URL_PATTERNS
     """

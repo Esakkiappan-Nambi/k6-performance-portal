@@ -19,22 +19,37 @@ export const options = {
 };
 
 export default function () {
+<<<<<<< HEAD
     // Scheduled Test | Frequency: once | Start: 2026-07-02T18:23 | End: 2026-07-02T18:25
+=======
+    // Scheduled Test | Frequency: once | Start: 2026-07-01T09:53 | End: 2026-07-01T09:54
+>>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
     const variables = {};
     
 
     
         // Scheduler: wait until start time
+<<<<<<< HEAD
         const scheduleStart = new Date("2026-07-02T18:23:00").getTime();
         if (Date.now() < scheduleStart) {
             const waitMs = scheduleStart - Date.now();
             console.log("Waiting until scheduled start:", "2026-07-02T18:23:00");
+=======
+        const scheduleStart = new Date("2026-07-01T09:53:00").getTime();
+        if (Date.now() < scheduleStart) {
+            const waitMs = scheduleStart - Date.now();
+            console.log("Waiting until scheduled start:", "2026-07-01T09:53:00");
+>>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
             sleep(waitMs / 1000);
         }
 
     
         // Scheduler: stop after end time
+<<<<<<< HEAD
         const scheduleEnd = new Date("2026-07-02T18:25:00").getTime();
+=======
+        const scheduleEnd = new Date("2026-07-01T09:54:00").getTime();
+>>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
         if (Date.now() > scheduleEnd) {
             console.log("Schedule expired. Stopping test.");
             return;
@@ -42,6 +57,7 @@ export default function () {
 
 
     for (let i = 0; i < 2; i++) {
+<<<<<<< HEAD
         
         // ── Request 1 (with retry logic) ──
         let res_0;
@@ -87,6 +103,19 @@ export default function () {
                 }
             }
         }
+=======
+        // Cookie Manager disabled - clearing cookies each iteration
+  
+        
+    // Cache disabled
+    
+        
+
+        // ── Request 1 ──
+        let res_0 = http.get(`https://jsonplaceholder.typicode.com/users/1`, {
+                headers: {}
+            });
+>>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
 
         console.log("Request: Request 1");
         console.log("Status:", res_0.status);
@@ -101,10 +130,13 @@ export default function () {
             aggregateFailureRate.add(false);
         }
 
+<<<<<<< HEAD
         check(res_0, {
             "Request 1 status 200": (r) => r.status === 200,
             "Request 1 response time < 29999ms": (r) => r.timings.duration <= 29999
         });
 
+=======
+>>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
     }
 }

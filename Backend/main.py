@@ -880,6 +880,7 @@ def preview_step(
 
 
 
+<<<<<<< HEAD
 # ── NEW: Swagger / OpenAPI import — Step 1: discover ──────────────────────────
 # Called by the "Import from Swagger" tab's "Discover APIs" button.
 # Body: { "swagger_url": "https://petstore.swagger.io/v2/swagger.json" }
@@ -950,6 +951,8 @@ def import_apis(
     return {"success": True, "steps": steps, "count": len(steps)}
 
 
+=======
+>>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
 @app.get("/dashboard-stats")
 def dashboard_stats(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     total_tests = db.query(Test).filter(Test.user_id == current_user.id).count()

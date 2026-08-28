@@ -36,7 +36,11 @@ function History() {
     };
 
     const deleteRun = async (runId) => {
+<<<<<<< HEAD
         const confirmDelete = window.confirm("Are you sure you want to delete this run?");
+=======
+        const confirmDelete = win.confirm("Are you sure you want to delete this run?");
+>>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
         if (!confirmDelete) return;
 
         try {
