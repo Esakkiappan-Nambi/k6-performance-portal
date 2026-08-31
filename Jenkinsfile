@@ -96,17 +96,21 @@ pipeline {
                             // 'SonarScanner' must exactly match the Name configured under
                             // Manage Jenkins -> Tools -> SonarQube Scanner installations.
                             def scannerHome = tool 'SonarScanner'
-
-                            sh """
-                                echo "Starting SonarQube scan..."
-
-                                ${scannerHome}/bin/sonar-scanner \
-                                    -Dsonar.projectKey="${SONAR_PROJECT_KEY}" \
-                                    -Dsonar.sources=. \
-                                    -Dsonar.host.url="${SONAR_HOST_URL}" \
-                                    -Dsonar.token="${SONAR_TOKEN}"
-                            """
+                            env.SCANNER_HOME = scannerHome
                         }
+
+                        // Single-quoted sh block: the shell (not Groovy) resolves these
+                        // variables at runtime, so SONAR_TOKEN is never baked into the
+                        // literal command string and Jenkins can mask it properly in logs.
+                        sh '''
+                            echo "Starting SonarQube scan..."
+
+                            "${SCANNER_HOME}/bin/sonar-scanner" \
+                                -Dsonar.projectKey="${SONAR_PROJECT_KEY}" \
+                                -Dsonar.sources=. \
+                                -Dsonar.host.url="${SONAR_HOST_URL}" \
+                                -Dsonar.token="${SONAR_TOKEN}"
+                        '''
                     }
                 }
             }
