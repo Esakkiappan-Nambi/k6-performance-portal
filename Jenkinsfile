@@ -89,16 +89,24 @@ pipeline {
                         variable: 'SONAR_TOKEN'
                     )
                 ]) {
+                    // 'SonarQubeServer' must exactly match the Name configured under
+                    // Manage Jenkins -> System -> SonarQube servers.
                     withSonarQubeEnv('SonarQubeServer') {
-                        sh '''
-                            echo "Starting SonarQube scan..."
+                        script {
+                            // 'SonarScanner' must exactly match the Name configured under
+                            // Manage Jenkins -> Tools -> SonarQube Scanner installations.
+                            def scannerHome = tool 'SonarScanner'
 
-                            sonar-scanner \
-                                -Dsonar.projectKey="${SONAR_PROJECT_KEY}" \
-                                -Dsonar.sources=. \
-                                -Dsonar.host.url="${SONAR_HOST_URL}" \
-                                -Dsonar.token="${SONAR_TOKEN}"
-                        '''
+                            sh """
+                                echo "Starting SonarQube scan..."
+
+                                ${scannerHome}/bin/sonar-scanner \
+                                    -Dsonar.projectKey="${SONAR_PROJECT_KEY}" \
+                                    -Dsonar.sources=. \
+                                    -Dsonar.host.url="${SONAR_HOST_URL}" \
+                                    -Dsonar.token="${SONAR_TOKEN}"
+                            """
+                        }
                     }
                 }
             }
