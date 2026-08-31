@@ -80,9 +80,12 @@ pipeline {
 
         stage('SonarQube Scan') {
             steps {
+                // NOTE: credentialsId must be the ID of a "Secret text" credential
+                // stored in Jenkins (Manage Jenkins -> Credentials), NOT the raw token.
+                // Create one with an ID like 'sonarqube-token' and paste the token as its value.
                 withCredentials([
                     string(
-                        credentialsId: 'squ_fdf6f82fbbc93b264907ffe614e633f4cde47559',
+                        credentialsId: 'sonarqube-token',
                         variable: 'SONAR_TOKEN'
                     )
                 ]) {
@@ -111,9 +114,10 @@ pipeline {
 
         stage('Fetch SonarQube Issues') {
             steps {
+                // Same fix here: use the real Jenkins credential ID, not a raw token/string.
                 withCredentials([
                     string(
-                        credentialsId: '118e514b2ba4979fe9aa2db4b63d7c58f7',
+                        credentialsId: 'sonarqube-token',
                         variable: 'SONAR_TOKEN'
                     )
                 ]) {
