@@ -182,11 +182,11 @@ pipeline {
 
         stage('Archive Reports') {
             steps {
-                archiveArtifacts(
-                    artifacts: "${REPORT_DIR}/*",
-                    fingerprint: true,
-                    allowEmptyArchive: true
-                )
+               archiveArtifacts(
+    artifacts: "${REPORT_DIR}/*, dashboard.html",
+    fingerprint: true,
+    allowEmptyArchive: true
+)
             }
         }
     }
