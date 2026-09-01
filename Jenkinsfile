@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SONAR_HOST_URL    = 'http://sonarqube:9000'
+        SONAR_HOST_URL    = 'http://host.docker.internal:9000'
         SONAR_PROJECT_KEY = 'k6'
         REPORT_DIR        = 'security-reports'
         TOOLS_BIN         = "${WORKSPACE}/.tools/bin"
