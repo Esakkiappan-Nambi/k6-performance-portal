@@ -876,11 +876,6 @@ def preview_step(
         "body_text":  body_text[:20000],   # cap payload size sent back to UI
         "body_json":  body_json,
         "elapsed_ms": round(resp.elapsed.total_seconds() * 1000, 1),
-    }
-
-
-
-<<<<<<< HEAD
 # ── NEW: Swagger / OpenAPI import — Step 1: discover ──────────────────────────
 # Called by the "Import from Swagger" tab's "Discover APIs" button.
 # Body: { "swagger_url": "https://petstore.swagger.io/v2/swagger.json" }
