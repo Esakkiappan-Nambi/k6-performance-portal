@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SONAR_HOST_URL    = ' http://sonarqube:9000'
+        SONAR_HOST_URL    = 'http://sonarqube:9000'
         SONAR_PROJECT_KEY = 'k6'
         REPORT_DIR        = 'security-reports'
     }
@@ -136,10 +136,7 @@ pipeline {
                     sh '''
                         echo "Fetching SonarQube issues..."
 
-                        curl --fail --silent --show-error \
-                            -u "${SONAR_TOKEN}:" \
-                            "${SONAR_HOST_URL}/api/issues/search?componentKeys=${SONAR_PROJECT_KEY}&ps=500" \
-                            -o "${REPORT_DIR}/sonarqube-report.json"
+                        curl --fail --silent --show-error --get -u "${SONAR_TOKEN}:" --data-urlencode "componentKeys=${SONAR_PROJECT_KEY}" --data-urlencode "ps=500" "${SONAR_HOST_URL}/api/issues/search" -o "${REPORT_DIR}/sonarqube-report.json"
                     '''
                 }
             }
