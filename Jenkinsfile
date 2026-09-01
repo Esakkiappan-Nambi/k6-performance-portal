@@ -5,6 +5,8 @@ pipeline {
         SONAR_HOST_URL    = 'http://sonarqube:9000'
         SONAR_PROJECT_KEY = 'k6'
         REPORT_DIR        = 'security-reports'
+        TOOLS_BIN         = "${WORKSPACE}/.tools/bin"
+        PATH              = "${WORKSPACE}/.tools/bin:${HOME}/.local/bin:${PATH}"
     }
 
     options {
@@ -25,6 +27,40 @@ pipeline {
                 sh '''
                     rm -rf "${REPORT_DIR}"
                     mkdir -p "${REPORT_DIR}"
+                '''
+            }
+        }
+
+        stage('Install Scan Tools') {
+            steps {
+                sh '''
+                    set -e
+                    mkdir -p "${TOOLS_BIN}"
+
+                    echo "--- Ensuring pip ---"
+                    if ! python3 -m pip --version >/dev/null 2>&1; then
+                        python3 -m ensurepip --upgrade --user || true
+                    fi
+                    if ! python3 -m pip --version >/dev/null 2>&1; then
+                        echo "ensurepip unavailable, bootstrapping pip via get-pip.py"
+                        curl -sSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
+                        python3 /tmp/get-pip.py --user
+                    fi
+                    python3 -m pip --version
+
+                    echo "--- Installing Semgrep ---"
+                    python3 -m pip install --user --quiet --upgrade semgrep
+                    semgrep --version
+
+                    echo "--- Installing Trivy ---"
+                    if [ ! -x "${TOOLS_BIN}/trivy" ]; then
+                        TRIVY_VERSION=0.56.2
+                        curl -sSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" -o /tmp/trivy.tar.gz
+                        tar -xzf /tmp/trivy.tar.gz -C /tmp trivy
+                        mv /tmp/trivy "${TOOLS_BIN}/trivy"
+                        chmod +x "${TOOLS_BIN}/trivy"
+                    fi
+                    trivy --version
                 '''
             }
         }
@@ -52,8 +88,6 @@ pipeline {
             steps {
                 sh '''
                     echo "Starting Semgrep scan..."
-
-                    pip install --break-system-packages --quiet semgrep || true
 
                     semgrep \
                         --config=auto \
