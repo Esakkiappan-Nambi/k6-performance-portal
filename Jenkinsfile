@@ -142,12 +142,10 @@ pipeline {
             }
         }
 
-        stage('Generate PDF Report') {
+        stage('Generate HTML Report') {
             steps {
                 sh '''
-                    echo "Generating PDF report..."
-
-                    pip install --break-system-packages --quiet fpdf2 || true
+                    echo "Generating HTML report..."
 
                     python3 generate_report.py "${REPORT_DIR}"
                 '''
@@ -167,7 +165,7 @@ pipeline {
 
     post {
         always {
-            echo 'Security scan pipeline finished. See archived artifacts for JSON + PDF reports.'
+            echo 'Security scan pipeline finished. See archived artifacts for JSON + HTML reports.'
         }
 
         success {
