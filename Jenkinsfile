@@ -51,12 +51,8 @@ pipeline {
 
                     echo "--- Installing Trivy ---"
                     if [ ! -x "${TOOLS_BIN}/trivy" ]; then
-                        TRIVY_VERSION=0.56.2
-                        curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" -o /tmp/trivy.tar.gz
-                        file /tmp/trivy.tar.gz
-                        tar -xzf /tmp/trivy.tar.gz -C /tmp trivy
-                        mv /tmp/trivy "${TOOLS_BIN}/trivy"
-                        chmod +x "${TOOLS_BIN}/trivy"
+                        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+                            | sh -s -- -b "${TOOLS_BIN}"
                     fi
                     trivy --version
                 '''
