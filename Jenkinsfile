@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SONAR_HOST_URL    = ' http://localhost:9000 to http://sonarqube:9000'
+        SONAR_HOST_URL    = ' http://sonarqube:9000'
         SONAR_PROJECT_KEY = 'k6'
         REPORT_DIR        = 'security-reports'
     }
