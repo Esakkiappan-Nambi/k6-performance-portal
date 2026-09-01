@@ -727,7 +727,7 @@ JS = """
 
   navItems.forEach(btn => btn.addEventListener('click', () => navigateTo(btn.dataset.target)));
 
-  const PAGE_SIZE = 20;
+  const PAGE_SIZE = 10;
   const pageState = {};
 
   function applyFilter(scope, resetPage){
