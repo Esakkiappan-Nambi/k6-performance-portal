@@ -39,17 +39,14 @@ pipeline {
 
                     echo "--- Ensuring pip ---"
                     if ! python3 -m pip --version >/dev/null 2>&1; then
-                        python3 -m ensurepip --upgrade --user || true
-                    fi
-                    if ! python3 -m pip --version >/dev/null 2>&1; then
-                        echo "ensurepip unavailable, bootstrapping pip via get-pip.py"
+                        echo "pip module missing, bootstrapping via get-pip.py"
                         curl -sSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
-                        python3 /tmp/get-pip.py --user
+                        python3 /tmp/get-pip.py --user --break-system-packages
                     fi
                     python3 -m pip --version
 
                     echo "--- Installing Semgrep ---"
-                    python3 -m pip install --user --quiet --upgrade semgrep
+                    python3 -m pip install --user --quiet --break-system-packages --upgrade semgrep
                     semgrep --version
 
                     echo "--- Installing Trivy ---"
