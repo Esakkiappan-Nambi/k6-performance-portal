@@ -1,3 +1,16 @@
 SECRET_KEY=k6-secret-key
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_HOURS=2
+# Temporary summary files
+summary_*.json
+
+# Other common unwanted files
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+.DS_Store
+sonar-project.properties
+semgrep-report.json
