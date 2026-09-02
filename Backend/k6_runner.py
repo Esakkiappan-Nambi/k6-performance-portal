@@ -981,7 +981,6 @@ def generate_pdf_report(run_id, test_name, metrics, output):
 
 
 
-<<<<<<< HEAD
-=======
+
  
 >>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603

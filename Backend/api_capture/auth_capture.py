@@ -4,7 +4,7 @@ api_capture/auth_capture.py
 Authenticated capture module.
 
 What it does:
-<<<<<<< HEAD
+
     1. Opens a headless browser
     2. Navigates to your login page
     3. Fills in username + password and submits the form
@@ -370,7 +370,7 @@ async def _authenticated_capture_async(
     unique = deduplicate(captured)
 
     print(f"\n[auth] Capture complete:")
-<<<<<<< HEAD
+
     print(f"Login success : {login_success}")
     print(f"Token found : {'Yes — ' + session_token[:20] + '...' if session_token else 'No'}")
     print(f"API calls : {len(unique)} unique")
@@ -378,7 +378,7 @@ async def _authenticated_capture_async(
     print(f"       Login success  : {login_success}")
     print(f"       Token found    : {'Yes — ' + session_token[:20] + '...' if session_token else 'No'}")
     print(f"       API calls      : {len(unique)} unique")
->>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
+
 
     return {
         "scenario":      unique,
