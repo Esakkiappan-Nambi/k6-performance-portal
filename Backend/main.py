@@ -10,6 +10,7 @@ import time
 import urllib.error
 import urllib.request
 from router.auto_capture import router as auto_capture_router  # ← uncommented & fixed
+from router.recorder import router as recorder_router
 from models import User, Test, TestRun, Report
 from schemas import RegisterUser, LoginUser
 import json
@@ -33,6 +34,7 @@ app = FastAPI()
 
 # ── Mount routers ─────────────────────────────────────────────────────────────
 app.include_router(auto_capture_router)  # registers POST /auto-capture
+app.include_router(recorder_router)      # registers /recorder/* endpoints
 
 # ── Scheduler ─────────────────────────────────────────────────────────────────
 scheduler = BackgroundScheduler()
@@ -47,7 +49,7 @@ SCRIPT_FOLDER = "generated_scripts"
 # ── CORS ──────────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173","http://10.10.40.107:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -341,12 +343,6 @@ def create_test(
     return {"message": "Test Created Successfully", "test_id": new_test.id}
 
 
-@app.get("/test/{test_id}")
-def get_test_by_id(test_id: int, db: Session = Depends(get_db)):
-    test = db.query(Test).filter(Test.id == test_id).first()
-    if not test:
-        raise HTTPException(status_code=404, detail="Test not found")
-    return test
 
 
 @app.put("/update-test/{test_id}")
@@ -529,11 +525,34 @@ def run_k6_in_background(test_id: int, test_run_id: int, script_path: str, asser
     Runs k6 in a background thread with its own DB session.
     Never call this from the FastAPI request thread.
     """
+def terminate_k6_process(run_id: int):
+    proc = running_processes.get(run_id)
+    if proc:
+        try:
+            if sys.platform == "win32":
+                subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], capture_output=True)
+            else:
+                proc.terminate()
+        except Exception as e:
+            print(f"[k6] Error killing process {proc.pid}: {e}")
+        finally:
+            running_processes.pop(run_id, None)
+
+
+def run_k6_in_background(test_id: int, test_run_id: int, script_path: str, assertions_raw):
+    """
+    Runs k6 in a background thread with its own DB session.
+    Never call this from the FastAPI request thread.
+    """
     db = SessionLocal()
     try:
         print(f"[k6] Starting test_id={test_id} run_id={test_run_id}")
 
-        output, summary_data, summary_path = execute_k6(script_path, test_run_id)
+        def on_started(proc):
+            running_processes[test_run_id] = proc
+            running_processes[f"test_{test_id}"] = proc
+
+        output, summary_data, summary_path = execute_k6(script_path, test_run_id, on_process_created=on_started)
         metrics = extract_metrics(summary_data, output, summary_path)
 
         print(
@@ -543,6 +562,7 @@ def run_k6_in_background(test_id: int, test_run_id: int, script_path: str, asser
         )
 
         test = db.query(Test).filter(Test.id == test_id).first()
+        test_run = db.query(TestRun).filter(TestRun.id == test_run_id).first()
         test_name = test.test_name if test else "Unknown"
 
         pdf_report_path = generate_pdf_report(test_run_id, test_name, metrics, output)
@@ -551,25 +571,28 @@ def run_k6_in_background(test_id: int, test_run_id: int, script_path: str, asser
         if assertions_raw:
             assertions = json.loads(assertions_raw) if isinstance(assertions_raw, str) else assertions_raw
 
-        # ── Determine pass / fail ─────────────────────────────────────────────
-        status = "completed"
-        if not summary_data or not summary_data.get("metrics"):
-            status = "failed"
-            print("[k6] Failed: no summary data")
-        elif metrics["total_requests"] == 0:
-            status = "failed"
-            print("[k6] Failed: zero requests")
-        elif metrics["error_rate"] >= 100:
-            status = "failed"
-            print("[k6] Failed: 100% error rate")
-        elif metrics["error_rate"] > 10:
-            status = "failed"
-            print(f"[k6] Failed: error rate {metrics['error_rate']:.1f}% > 10%")
-        elif assertions:
-            if metrics["avg_response_time"] > assertions.get("max_response_time", 99999):
+        # ── Determine pass / fail / stopped ───────────────────────────────────
+        if test_run and test_run.status in ("stopping", "stopped"):
+            status = "stopped"
+        else:
+            status = "completed"
+            if not summary_data or not summary_data.get("metrics"):
                 status = "failed"
-            elif metrics["error_rate"] > assertions.get("max_error_rate", 100):
+                print("[k6] Failed: no summary data")
+            elif metrics["total_requests"] == 0:
                 status = "failed"
+                print("[k6] Failed: zero requests")
+            elif metrics["error_rate"] >= 100:
+                status = "failed"
+                print("[k6] Failed: 100% error rate")
+            elif metrics["error_rate"] > 10:
+                status = "failed"
+                print(f"[k6] Failed: error rate {metrics['error_rate']:.1f}% > 10%")
+            elif assertions:
+                if metrics["avg_response_time"] > assertions.get("max_response_time", 99999):
+                    status = "failed"
+                elif metrics["error_rate"] > assertions.get("max_error_rate", 100):
+                    status = "failed"
 
         print(f"[k6] Final status: {status}")
 
@@ -590,7 +613,6 @@ def run_k6_in_background(test_id: int, test_run_id: int, script_path: str, asser
         )
         db.add(report)
 
-        test_run = db.query(TestRun).filter(TestRun.id == test_run_id).first()
         if test:
             test.status = status
         if test_run:
@@ -606,15 +628,17 @@ def run_k6_in_background(test_id: int, test_run_id: int, script_path: str, asser
             db.rollback()
             test     = db.query(Test).filter(Test.id == test_id).first()
             test_run = db.query(TestRun).filter(TestRun.id == test_run_id).first()
-            if test:
+            if test and test.status != "stopped":
                 test.status = "failed"
-            if test_run:
+            if test_run and test_run.status != "stopped":
                 test_run.status = "failed"
                 test_run.output = str(e)
             db.commit()
         except Exception as inner:
             print(f"[k6] Could not mark as failed: {inner}")
     finally:
+        running_processes.pop(test_run_id, None)
+        running_processes.pop(f"test_{test_id}", None)
         db.close()
 
 
@@ -668,38 +692,37 @@ def stop_test(
     current_user: User = Depends(get_current_user),
 ):
     """
-    Mark the active run as 'stopping' so the background task can exit cleanly.
-    If a PID is stored on the TestRun, we also send SIGTERM.
+    Terminates the active k6 process immediately and marks status as stopped.
     """
     test = db.query(Test).filter(Test.id == test_id).first()
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
-    if test.status != "running":
-        raise HTTPException(status_code=400, detail="Test is not running")
 
     active_run = (
         db.query(TestRun)
-        .filter(TestRun.test_id == test_id, TestRun.status == "running")
+        .filter(TestRun.test_id == test_id, TestRun.status.in_(["running", "stopping"]))
         .first()
     )
-    if not active_run:
-        raise HTTPException(status_code=400, detail="No active run found")
 
-    try:
-        # If you later add a `pid` column to TestRun, uncomment this:
-        # if hasattr(active_run, "pid") and active_run.pid:
-        #     try:
-        #         os.kill(active_run.pid, signal.SIGTERM)
-        #     except ProcessLookupError:
-        #         pass
-
-        test.status       = "stopping"
-        active_run.status = "stopping"
+    test.status = "stopped"
+    if active_run:
+        active_run.status = "stopped"
         db.commit()
-        return {"message": "Test stop requested"}
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        terminate_k6_process(active_run.id)
+    else:
+        db.commit()
+
+    proc = running_processes.pop(f"test_{test_id}", None)
+    if proc:
+        try:
+            if sys.platform == "win32":
+                subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], capture_output=True)
+            else:
+                proc.terminate()
+        except Exception:
+            pass
+
+    return {"message": "Test stopped successfully"}
 
 
 # ── Query endpoints ───────────────────────────────────────────────────────────
@@ -876,6 +899,9 @@ def preview_step(
         "body_text":  body_text[:20000],   # cap payload size sent back to UI
         "body_json":  body_json,
         "elapsed_ms": round(resp.elapsed.total_seconds() * 1000, 1),
+    }
+
+
 # ── NEW: Swagger / OpenAPI import — Step 1: discover ──────────────────────────
 # Called by the "Import from Swagger" tab's "Discover APIs" button.
 # Body: { "swagger_url": "https://petstore.swagger.io/v2/swagger.json" }
@@ -946,8 +972,6 @@ def import_apis(
     return {"success": True, "steps": steps, "count": len(steps)}
 
 
-=======
->>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
 @app.get("/dashboard-stats")
 def dashboard_stats(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     total_tests = db.query(Test).filter(Test.user_id == current_user.id).count()
@@ -1033,6 +1057,43 @@ def download_report(run_id: int, db: Session = Depends(get_db)):
         media_type="application/pdf",
         filename=f"run_{run_id}_report.pdf",
     )
+
+
+# ── Telemetry Health endpoint ───────────────────────────────────────────────
+
+@app.get("/telemetry-status")
+def telemetry_status():
+    """
+    Checks whether Grafana (port 3000) and InfluxDB (port 8086) are reachable,
+    returning connection health for live telemetry and dashboard links.
+    """
+    grafana_online = False
+    influxdb_online = False
+
+    # Check Grafana on 3000
+    try:
+        req = urllib.request.Request("http://localhost:3000/api/health", headers={"User-Agent": "k6-portal"})
+        with urllib.request.urlopen(req, timeout=1.0) as resp:
+            if resp.status == 200:
+                grafana_online = True
+    except Exception:
+        grafana_online = False
+
+    # Check InfluxDB on 8086
+    try:
+        req = urllib.request.Request("http://localhost:8086/ping", headers={"User-Agent": "k6-portal"})
+        with urllib.request.urlopen(req, timeout=1.0) as resp:
+            if resp.status in (200, 204):
+                influxdb_online = True
+    except Exception:
+        influxdb_online = False
+
+    return {
+        "grafana_online": grafana_online,
+        "influxdb_online": influxdb_online,
+        "grafana_base_url": "http://localhost:3000",
+        "grafana_dashboard_path": "/d/adfqsh7/k6-load-testing-results",
+    }
 
 
 # ── APScheduler helper ────────────────────────────────────────────────────────

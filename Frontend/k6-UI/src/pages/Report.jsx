@@ -1,198 +1,165 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import {FileText,BarChart3,Download,ArrowLeft} from "lucide-react";
-import "./Report.css";
+import API from "../services/api";
+import {
+  FileText, BarChart3, Download, ArrowLeft, Activity,
+  CheckCircle, AlertCircle, ExternalLink, Copy, Check, Loader2,
+} from "lucide-react";
+import Layout from "../components/Layout";
 import { toast } from "react-toastify";
+import "./Report.css";
 
-function Report() {
-  const { id } = useParams();
+export default function Report() {
+  const { id }   = useParams();
   const navigate = useNavigate();
+  const [report,     setReport]     = useState(null);
+  const [downloading, setDownloading] = useState(false);
+  const [copied,      setCopied]    = useState(false);
 
-  const [report, setReport] = useState(null);
+  useEffect(() => { fetchReport(); }, [id]);
 
-  useEffect(() => {
-    fetchReport();
-  }, []);
-
-const fetchReport = async () => {
-    try {
-      const response = await axios.get(
-        `http://127.0.0.1:8000/report/${id}`
-      );
-      setReport(response.data);
-    } catch (error) {
-      console.log("Error fetching report:", error);
-    }
+  const fetchReport = async () => {
+    try { const r = await API.get(`/report/${id}`); setReport(r.data); }
+    catch { toast.error("Failed to load report"); }
   };
 
-  const downloadReport = async () => {
+  const downloadPDF = async () => {
+    setDownloading(true);
     try {
-      const response = await axios.get(
-        `http://127.0.0.1:8000/download-report/${id}`,
-        {
-          responseType: "blob",
-        }
-      );
-
-      const fileURL = window.URL.createObjectURL(
-        new Blob([response.data],{ type: "application/pdf" })
-      );
-
-      const link = document.createElement("a");
-      link.href = fileURL;
-      link.setAttribute(
-        "download",
-        `${report.test_name}_report.pdf`
-      );
-
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      window.URL.revokeObjectURL(fileURL);
-    } catch (error) {
-      console.error("Download failed", error);
-      toast.error("Download failed");
-    }
+      const r = await API.get(`/download-report/${id}`, { responseType:"blob" });
+      const url = window.URL.createObjectURL(new Blob([r.data], { type:"application/pdf" }));
+      const a = document.createElement("a");
+      a.href = url; a.download = `${report?.test_name||"test"}_run_${id}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("PDF downloaded");
+    } catch { toast.error("Download failed"); }
+    finally { setDownloading(false); }
   };
 
-  if (!report) {
-    return (
-      <div className="loading">
-        Loading Report...
+  const copyOutput = () => {
+    navigator.clipboard.writeText(report?.output || "");
+    setCopied(true); setTimeout(() => setCopied(false), 2000);
+    toast.success("Copied");
+  };
+
+  if (!report) return (
+    <Layout>
+      <div className="loading-box" style={{ paddingTop:80 }}>
+        <Loader2 size={32} className="spinner" />
+        <p>Loading report #{id}…</p>
       </div>
-    );
-  }
+    </Layout>
+  );
+
+  const isPassed = report.status === "completed" && report.error_rate < 1;
+
+  const kpis = [
+    { label:"Throughput",    value: report.throughput,        unit:"req/s" },
+    { label:"Avg Response",  value: report.avg_response_time, unit:"ms" },
+    { label:"P90 Latency",   value: report.p90,               unit:"ms" },
+    { label:"P95 Latency",   value: report.p95,               unit:"ms" },
+    { label:"Total Requests",value: report.total_requests,    unit:"" },
+    { label:"Error Rate",    value: `${report.error_rate}`,   unit:"%", warn: report.error_rate > 0 },
+  ];
+
+  const metrics = [
+    ["Total HTTP Requests",          report.total_requests || 0,    ""],
+    ["Passed Checks / Assertions",   report.passed_checks  || 0,    ""],
+    ["Failed Requests",              report.failed_requests|| 0,    ""],
+    ["Throughput",                   report.throughput,              "req/s"],
+    ["Min Response Time",            report.min_response_time|| 0,  "ms"],
+    ["Avg Response Time",            report.avg_response_time,       "ms"],
+    ["P90 Latency",                  report.p90,                     "ms"],
+    ["P95 Latency",                  report.p95,                     "ms"],
+    ["Max Response Time",            report.max_response_time|| 0,  "ms"],
+    ["Error Rate",                   `${report.error_rate}%`,        ""],
+  ];
 
   return (
-    <div className="report-container">
-
-      {/* Header */}
-      <div className="report-header">
-        <button
-          className="back-btn"
-          onClick={() => navigate("/history")}
-        >
-          <ArrowLeft size={18} />
-          Back
+    <Layout>
+      {/* Topbar */}
+      <div className="rpt-topbar">
+        <button className="rpt-back" onClick={() => navigate("/history")}>
+          <ArrowLeft size={15} /> History
         </button>
-
-        <h1>
-          <FileText size={28} />
-          Performance Test Aggregate Report
-        </h1>
-
-        <button className="download-btn"
-          onClick={downloadReport} > <Download size={18} />
-          Download </button>
-      </div>
-
-      {/* Summary */}
-      <div className="report-card">
-        <div className="report-row">
+        <div className="rpt-title-row">
           <div>
-            <h2>{report.test_name}</h2>
-
-            <p>
-              <strong>Status:</strong>{" "}
-              {report.status}
-            </p>
-
-            <p>
-              <strong>Started At:</strong>{" "}
-              {new Date(
-                report.started_at
-              ).toLocaleString()}
-            </p>
+            <div className="rpt-title"><FileText size={18} /> {report.test_name} · Execution #{id}</div>
+            <div className="rpt-sub">Generated at {new Date(report.started_at || Date.now()).toLocaleString()}</div>
           </div>
-
-          <span
-            className={`status ${
-              report.status?.toLowerCase() || "completed"
-            }`}
-          >
-            {report.status}
-          </span>
+        </div>
+        <div className="rpt-actions">
+          <button className="btn btn-ghost btn-sm" onClick={() => window.open(`http://localhost:3000/d/adfqsh7/k6-load-testing-results?var-run_id=${id}`, "_blank")}>
+            <ExternalLink size={13} /> Grafana
+          </button>
+          <button className="btn btn-primary btn-sm" onClick={downloadPDF} disabled={downloading}>
+            <Download size={13} /> {downloading ? "Downloading…" : "Download PDF"}
+          </button>
         </div>
       </div>
 
-      {/* Aggregate Metrics */}
-      <div className="report-card">
-        <h3>
-          <BarChart3 size={20} />
-          Aggregate Metrics
-        </h3>
+      <div className="rpt-body">
+        {/* Verdict */}
+        <div className={`verdict-card ${isPassed ? "verdict-pass" : "verdict-fail"}`}>
+          <div className="verdict-left">
+            {isPassed ? <CheckCircle size={26} /> : <AlertCircle size={26} />}
+            <div>
+              <h3>{isPassed ? "Test Execution Passed" : "Execution Completed with SLA Violations"}</h3>
+              <p>Status: <strong>{report.status?.toUpperCase()}</strong> · Requests: <strong>{report.total_requests}</strong> · Error Rate: <strong>{report.error_rate}%</strong></p>
+            </div>
+          </div>
+          <span className={`badge ${isPassed ? "badge-completed" : "badge-failed"}`}>{report.status}</span>
+        </div>
 
-        <table className="aggregate-table">
-          <thead>
-            <tr>
-              <th>Metric</th>
-              <th>Value</th>
-            </tr>
-          </thead>
+        {/* KPI cards */}
+        <div className="rpt-kpis">
+          {kpis.map(({ label, value, unit, warn }) => (
+            <div className={`rpt-kpi-card${warn ? " warn" : ""}`} key={label}>
+              <div className="rpt-kpi-label">{label}</div>
+              <div className="rpt-kpi-value">{value}</div>
+              {unit && <div className="rpt-kpi-unit">{unit}</div>}
+            </div>
+          ))}
+        </div>
 
-          <tbody>
-            <tr>
-              <td>Total Requests</td>
-              <td>{report.total_requests || 0}</td>
-            </tr>
+        {/* Aggregate metrics table */}
+        <div className="rpt-metrics-card">
+          <div className="rpt-metrics-header"><BarChart3 size={17} /> Aggregate Metrics Breakdown</div>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Performance Metric</th>
+                <th style={{ textAlign:"right" }}>Measured Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {metrics.map(([label, value, unit]) => (
+                <tr key={label}>
+                  <td style={{ color:"var(--text-secondary)" }}>{label}</td>
+                  <td style={{ textAlign:"right", fontWeight:600, color:"var(--text-primary)" }}>
+                    {value} {unit && <span style={{ color:"var(--text-muted)", fontWeight:400, fontSize:11 }}>{unit}</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-            <tr>
-              <td>Failed Requests</td>
-              <td>{report.failed_requests || 0}</td>
-            </tr>
-
-            <tr>
-              <td>Passed Checks</td>
-              <td>{report.passed_checks || 0}</td>
-            </tr>
-
-            <tr>
-              <td>Throughput</td>
-              <td>{report.throughput} req/s</td>
-            </tr>
-
-            <tr>
-              <td>Average Response Time</td>
-              <td>{report.avg_response_time} ms</td>
-            </tr>
-
-            <tr>
-              <td>Minimum Response Time</td>
-              <td>{report.min_response_time} ms</td>
-            </tr>
-
-            <tr>
-              <td>Maximum Response Time</td>
-              <td>{report.max_response_time} ms</td>
-            </tr>
-
-            <tr>
-              <td>P90</td>
-              <td>{report.p90} ms</td>
-            </tr>
-
-            <tr>
-              <td>P95</td>
-              <td>{report.p95} ms</td>
-            </tr>
-
-            <tr>
-              <td>Error Rate</td>
-              <td>{report.error_rate}%</td>
-            </tr>
-        </tbody>
-        </table>
-    </div>
-
-      {/* Raw Output */}
-    <div className="output-card">
-        <h3>Execution Output</h3>
-        <pre>{report.output}</pre>
-    </div>
-    </div>
-);
+        {/* Terminal output */}
+        {report.output && (
+          <div className="rpt-output-card">
+            <div className="rpt-output-header">
+              <span className="rpt-output-title">Execution Output &amp; k6 Summary</span>
+              <button className="btn btn-ghost btn-sm" onClick={copyOutput}>
+                {copied ? <Check size={13} /> : <Copy size={13} />}
+                {copied ? "Copied" : "Copy Output"}
+              </button>
+            </div>
+            <pre className="terminal" style={{ margin:0, borderRadius:0, border:"none", maxHeight:500 }}>{report.output}</pre>
+          </div>
+        )}
+      </div>
+    </Layout>
+  );
 }
-
-export default Report;

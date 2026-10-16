@@ -12,15 +12,6 @@ What it does:
     5. Saves the session (cookies + localStorage token)
     6. Navigates to your app pages WITH that session active
     7. Captures every authenticated API call made
-=======
-  1. Opens a headless browser
-  2. Navigates to your login page
-  3. Fills in username + password and submits the form
-  4. Waits for the redirect to confirm login succeeded
-  5. Saves the session (cookies + localStorage token)
-  6. Navigates to your app pages WITH that session active
-  7. Captures every authenticated API call made
->>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
 
 Usage example:
     from api_capture.auth_capture import authenticated_capture
@@ -374,7 +365,7 @@ async def _authenticated_capture_async(
     print(f"Login success : {login_success}")
     print(f"Token found : {'Yes — ' + session_token[:20] + '...' if session_token else 'No'}")
     print(f"API calls : {len(unique)} unique")
-=======
+
     print(f"       Login success  : {login_success}")
     print(f"       Token found    : {'Yes — ' + session_token[:20] + '...' if session_token else 'No'}")
     print(f"       API calls      : {len(unique)} unique")

@@ -69,11 +69,11 @@ def generate_k6_script(
 
 const csvData = new SharedArray("csvData", function () {{
     return open("{csv_path}")
-        .split("\\n")
+        .split(/\\r?\\n/)
         .slice(1)
         .filter(line => line.trim() !== "")
         .map(line => {{
-            const cols = line.split(",");
+            const cols = line.split(",").map(c => c.trim().replace(/^["']|["']$/g, ''));
             return {{ {csv_mapping} }};
         }});
 }});
@@ -152,25 +152,37 @@ const csvData = new SharedArray("csvData", function () {{
             return headers;
         }
 
-        // Store response in cache
+        // Store response in cache (JMeter Cache Manager semantics)
         function storeCacheEntry(url, res) {
-            const etag = res.headers["ETag"] || res.headers["Etag"] || null;
-            const lastModified = res.headers["Last-Modified"] || null;
+            const h = res.headers || {};
+            const etag = h["ETag"] || h["Etag"] || h["etag"] || null;
+            const lastModified = h["Last-Modified"] || h["last-modified"] || null;
 
-            if (!__cache[url] && __cacheSize >= __cacheMaxSize) {
-                const oldestKey = Object.keys(__cache)[0];
-                delete __cache[oldestKey];
-                __cacheSize--;
+            if (res.status === 304) {
+                // 304 Not Modified: cache hit, retain cached body and refresh validators
+                if (__cache[url]) {
+                    if (etag) __cache[url].etag = etag;
+                    if (lastModified) __cache[url].lastModified = lastModified;
+                }
+                return;
             }
 
-            if (!__cache[url]) __cacheSize++;
+            if (res.status >= 200 && res.status < 300) {
+                if (!__cache[url] && __cacheSize >= __cacheMaxSize) {
+                    const oldestKey = Object.keys(__cache)[0];
+                    delete __cache[oldestKey];
+                    __cacheSize--;
+                }
 
-            __cache[url] = {
-                etag: etag,
-                lastModified: lastModified,
-                body: res.body,
-                status: res.status
-            };
+                if (!__cache[url]) __cacheSize++;
+
+                __cache[url] = {
+                    etag: etag,
+                    lastModified: lastModified,
+                    body: res.body,
+                    status: res.status
+                };
+            }
         }
 
         // Return cached response if 304
@@ -235,12 +247,20 @@ const csvData = new SharedArray("csvData", function () {{
         if step.get("extractVariable") and step.get("variableName"):
             extracted_vars.append(step["variableName"])
 
+    csv_var_list = []
+    if csv_enabled and csv_variables:
+        csv_var_list = [v.strip() for v in csv_variables.split(",") if v.strip()]
+
     def replace_vars(text):
         if not text:
             return text
 
-        all_vars = extracted_vars[:]
+        # Substitute CSV variables (${data.varName})
+        for cvar in csv_var_list:
+            text = text.replace(f"{{{{{cvar}}}}}", f"${{data.{cvar}}}")
 
+        # Substitute Extracted & UDV variables (${variables.varName})
+        all_vars = extracted_vars[:]
         if user_defined_variables:
             all_vars.extend([
                 v["name"].strip()
@@ -421,6 +441,24 @@ const csvData = new SharedArray("csvData", function () {{
                 {jar_option}
             }});
             storeCacheEntry(__url_{index}, __response_{index});
+            if (__response_{index}.status === 304 && __cache[__url_{index}]) {{
+                const __cached_{index} = __cache[__url_{index}];
+                return Object.assign({{}}, __response_{index}, {{
+                    body: __cached_{index}.body,
+                    status: 200,
+                    originalStatus: 304,
+                    isFromCache: true,
+                    json: function (selector) {{
+                        try {{
+                            const parsed = JSON.parse(__cached_{index}.body);
+                            if (!selector) return parsed;
+                            return selector.split('.').reduce((acc, part) => (acc ? acc[part] : undefined), parsed);
+                        }} catch (e) {{
+                            return undefined;
+                        }}
+                    }}
+                }});
+            }}
             return __response_{index};
         }})()"""
             else:
@@ -541,9 +579,14 @@ const csvData = new SharedArray("csvData", function () {{
             max_rt      = step_assertions.get("max_response_time", 500)
 
             if status_code or max_rt:
+                if cache_enabled and int(status_code) == 200:
+                    status_fn = "(r) => r.status === 200 || r.status === 304 || r.isFromCache === true"
+                else:
+                    status_fn = f"(r) => r.status === {status_code}"
+
                 requests += f"""
         check({response_var}, {{
-            "{name} status {status_code}": (r) => r.status === {status_code},
+            "{name} status {status_code}": {status_fn},
             "{name} response time < {max_rt}ms": (r) => r.timings.duration <= {max_rt}
         }});
 """
@@ -554,8 +597,9 @@ const csvData = new SharedArray("csvData", function () {{
                 for ta in text_assertions:
                     field     = ta.get("field", "body")
                     condition = ta.get("condition", "contains")
-                    value     = ta.get("value", "").replace('"', '\\"')
-                    label     = f"{name} — {field} {condition} '{value}'"
+                    val_json  = json.dumps(ta.get("value", ""))
+                    label_val = str(ta.get("value", "")).replace('"', "'")
+                    label     = f"{name} — {field} {condition} '{label_val}'"
 
                     if field == "body":
                         field_expr = "r.body"
@@ -567,19 +611,19 @@ const csvData = new SharedArray("csvData", function () {{
                         field_expr = "r.body"
 
                     if condition == "contains":
-                        expr = f'({field_expr} || "").includes("{value}")'
+                        expr = f'({field_expr} || "").includes({val_json})'
                     elif condition == "not_contains":
-                        expr = f'!({field_expr} || "").includes("{value}")'
+                        expr = f'!({field_expr} || "").includes({val_json})'
                     elif condition == "equals":
-                        expr = f'({field_expr} || "") === "{value}"'
+                        expr = f'({field_expr} || "") === {val_json}'
                     elif condition == "starts_with":
-                        expr = f'({field_expr} || "").startsWith("{value}")'
+                        expr = f'({field_expr} || "").startsWith({val_json})'
                     elif condition == "ends_with":
-                        expr = f'({field_expr} || "").endsWith("{value}")'
+                        expr = f'({field_expr} || "").endsWith({val_json})'
                     elif condition == "matches_regex":
-                        expr = f'new RegExp("{value}").test({field_expr} || "")'
+                        expr = f'new RegExp({val_json}).test({field_expr} || "")'
                     else:
-                        expr = f'({field_expr} || "").includes("{value}")'
+                        expr = f'({field_expr} || "").includes({val_json})'
 
                     check_lines.append(f'            "{label}": (r) => {expr}')
 
@@ -594,12 +638,29 @@ const csvData = new SharedArray("csvData", function () {{
         elif assertions:
             status_code = assertions.get("status_code", 200)
             max_rt      = assertions.get("max_response_time", 500)
+            if cache_enabled and int(status_code) == 200:
+                status_fn = "(r) => r.status === 200 || r.status === 304 || r.isFromCache === true"
+            else:
+                status_fn = f"(r) => r.status === {status_code}"
             requests += f"""
         check({response_var}, {{
-            "status {status_code}": (r) => r.status === {status_code},
+            "status {status_code}": {status_fn},
             "response time < {max_rt}ms": (r) => r.timings.duration <= {max_rt}
         }});
 """
+
+    # ── Global thresholds for options ─────────────────────────────────────────
+    threshold_parts = []
+    if assertions:
+        if assertions.get("max_response_time"):
+            threshold_parts.append(f"        'http_req_duration': ['p(95)<{assertions['max_response_time']}'],")
+        if assertions.get("max_error_rate") is not None:
+            max_rate_ratio = float(assertions["max_error_rate"]) / 100.0
+            threshold_parts.append(f"        'http_req_failed': ['rate<={max_rate_ratio:.4f}'],")
+
+    thresholds_block = ""
+    if threshold_parts:
+        thresholds_block = ",\n    thresholds: {\n" + "\n".join(threshold_parts) + "\n    }"
 
     # ── Assemble final script ─────────────────────────────────────────────────
     script = f"""import http from "k6/http";
@@ -619,7 +680,7 @@ export const options = {{
         {{ duration: "{ramp_up}s", target: {users} }},
         {{ duration: "{duration}s", target: {users} }},
         {{ duration: "{ramp_down}s", target: 0 }},
-    ],
+    ]{thresholds_block}
 }};
 
 export default function () {{
@@ -654,7 +715,19 @@ REPORT_FOLDER = "reports"
 os.makedirs(REPORT_FOLDER, exist_ok=True)
 
 
-def execute_k6(script_path, run_id):
+import urllib.request
+
+
+def is_influxdb_available(url="http://localhost:8086/ping", timeout=0.8):
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "k6-portal"})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return resp.status in (200, 204)
+    except Exception:
+        return False
+
+
+def execute_k6(script_path, run_id, on_process_created=None):
     absolute_script_path = os.path.abspath(script_path)
 
     if not os.path.exists(absolute_script_path):
@@ -668,31 +741,49 @@ def execute_k6(script_path, run_id):
 
     env = os.environ.copy()
 
-    process = subprocess.run(
-        [
-            "k6",
-            "run",
-            "--tag",
-            f"run_id={run_id}",
-            "--out",
-            "influxdb=http://localhost:8086/k6?pushInterval=5s",
-            "--summary-export",
-            summary_path,
-            absolute_script_path
-        ],
-        capture_output=True,
+    k6_cmd = [
+        "k6",
+        "run",
+        "--tag",
+        f"run_id={run_id}",
+    ]
+
+    # Telemetry streaming: dynamically verify InfluxDB before attaching output
+    if is_influxdb_available():
+        print(f"[k6] InfluxDB on localhost:8086 is ONLINE. Streaming metrics for Grafana live view.")
+        k6_cmd.extend(["--out", "influxdb=http://localhost:8086/k6?pushInterval=5s"])
+    else:
+        print(f"[k6] InfluxDB on localhost:8086 is OFFLINE. Running with local summary export.")
+
+    k6_cmd.extend([
+        "--summary-export",
+        summary_path,
+        absolute_script_path
+    ])
+
+    process = subprocess.Popen(
+        k6_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         text=True,
         encoding="utf-8",
         errors="ignore",
         env=env
     )
 
-    output = process.stdout + process.stderr
+    if on_process_created:
+        on_process_created(process)
+
+    stdout, stderr = process.communicate()
+    output = stdout + stderr
     summary_data = {}
 
     if os.path.exists(summary_path):
         with open(summary_path, "r", encoding="utf-8") as f:
-            summary_data = json.load(f)
+            try:
+                summary_data = json.load(f)
+            except Exception as e:
+                print(f"[k6] Error reading summary json: {e}")
 
     return output, summary_data, summary_path
 
@@ -877,16 +968,19 @@ def generate_pdf_report(run_id, test_name, metrics, output):
 
     # Row 2 — 3 cards
     row2 = [
-    card("Avg Response Time", f"{avg_rt} ms"),
-    card("P90", f"{p90} ms"),
-    card("P95", f"{p95} ms"),
+        card("Avg Response Time", f"{avg_rt} ms"),
+        card("P90", f"{p90} ms"),
+        card("P95", f"{p95} ms"),
     ]
     cards2 = Table([row2], colWidths=[doc.width / 3] * 3)
-    row2 = [
-    card("Avg Response Time", f"{avg_rt} ms"),
-    card("P90", f"{p90} ms"),
-    card("P95", f"{p95} ms"),
-    ]
+    cards2.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f9fafb")),
+        ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#e5e7eb")),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("TOPPADDING", (0, 0), (-1, -1), 14),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 14),
+    ]))
     elements.append(cards2)
     elements.append(Spacer(1, 14))
 
@@ -979,8 +1073,3 @@ def generate_pdf_report(run_id, test_name, metrics, output):
     doc.build(elements)
     return report_path
 
-
-
-
- 
->>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603

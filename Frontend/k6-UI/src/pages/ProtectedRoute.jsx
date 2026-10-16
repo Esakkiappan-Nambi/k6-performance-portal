@@ -2,35 +2,23 @@ import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import API from "../services/api";
 
-function ProtectedRoute({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(null);
+export default function ProtectedRoute({ children }) {
+  const [status, setStatus] = useState("checking"); // checking | ok | fail
 
   useEffect(() => {
-    const verifyAuth = async () => {
-      const token = sessionStorage.getItem("token");
-
-      if (!token) {
-        setIsAuthenticated(false);
-        return;
-      }
-
-      try {
-        await API.get("/verify-token");
-        setIsAuthenticated(true);
-      } catch (error) {
-        sessionStorage.removeItem("token");
-        setIsAuthenticated(false);
-      }
-    };
-
-    verifyAuth();
+    const token = sessionStorage.getItem("token");
+    if (!token) { setStatus("fail"); return; }
+    API.get("/verify-token")
+      .then(() => setStatus("ok"))
+      .catch(() => setStatus("fail"));
   }, []);
 
-  if (isAuthenticated === null) {
-    return <div>Loading...</div>;
-  }
+  if (status === "checking") return (
+    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"var(--bg-primary)", color:"var(--text-secondary)", fontSize:13 }}>
+      Verifying session…
+    </div>
+  );
 
-  return isAuthenticated ? children : <Navigate to="/" replace />;
+  if (status === "fail") return <Navigate to="/" replace />;
+  return children;
 }
-
-export default ProtectedRoute;

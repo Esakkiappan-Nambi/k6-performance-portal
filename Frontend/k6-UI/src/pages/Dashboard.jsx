@@ -1,336 +1,261 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import {
+  FileText, Activity, CheckCircle, Clock,
+  Plus, TrendingUp, ChevronRight, Pencil,
+  PlayCircle, BarChart3, ExternalLink,
+} from "lucide-react";
+import API from "../services/api";
+import Layout from "../components/Layout";
 import ExecutionChart from "./ExecutionChart";
 
-import {LayoutDashboard,PlusSquare,PlayCircle,BarChart3,History,LogOut,Activity,CheckCircle,Clock,FileText,} from "lucide-react";
+/* ── helpers ─────────────────────────────────────────────────── */
+function statusBadge(s) {
+  const map = {
+    completed: "badge-completed", failed: "badge-failed",
+    running:   "badge-running",   stopping: "badge-stopping",
+    created:   "badge-created",   stopped:  "badge-stopped",
+    scheduled: "badge-scheduled",
+  };
+  return `badge ${map[s?.toLowerCase()] || "badge-stopped"}`;
+}
 
-import "./Dashboard.css";
+export default function Dashboard() {
+  const navigate  = useNavigate();
+  const fullName  = localStorage.getItem("full_name") || "User";
 
-function Dashboard() {
-  const navigate = useNavigate();
-
-  const fullName =
-    localStorage.getItem("full_name") || "User";
-
-  const [stats, setStats] = useState({
-    total_tests: 0,
-    total_runs: 0,
-    success_rate: 0,
-    running_runs: 0,
+  const [stats,     setStats]     = useState({ total_tests: 0, total_runs: 0, success_rate: 0, running_runs: 0 });
+  const [recent,    setRecent]    = useState([]);
+  const [telemetry, setTelemetry] = useState({
+    grafana_online: false, influxdb_online: false,
+    grafana_base_url: "http://localhost:3000",
+    grafana_dashboard_path: "/d/adfqsh7/k6-load-testing-results",
   });
+  const [loading, setLoading] = useState(true);
 
-  const [recentTests, setRecentTests] =
-    useState([]);
+  useEffect(() => { load(); }, []);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    const token = sessionStorage.getItem("token");
+  const load = async () => {
+    setLoading(true);
     try {
-      const statsResponse = await axios.get(
-        "http://127.0.0.1:8000/dashboard-stats",
-      {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  }
-      );
-
-      setStats(statsResponse.data);
-
-      const testsResponse = await axios.get(
-              "http://127.0.0.1:8000/recent-tests",
-              {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },}
-      );
-
-      setRecentTests(testsResponse.data);
-    } catch (error) {
-      console.error(error);
+      const [s, r, t] = await Promise.all([
+        API.get("/dashboard-stats"),
+        API.get("/recent-tests"),
+        API.get("/telemetry-status").catch(() => ({ data: {} })),
+      ]);
+      setStats(s.data   || {});
+      setRecent(r.data  || []);
+      if (t.data) setTelemetry(t.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem("token");
-    sessionStorage.removeItem("full_name");
-    toast.success("Logout");
-    navigate("/");
-  };
+  const successRate = parseFloat(stats.success_rate || 0);
 
   return (
-    <div className="dashboard">
+    <Layout>
+      {/* ═══════════════════════════════════════════════════
+          PAGE HEADER  (matches screenshot 1)
+          ═══════════════════════════════════════════════════ */}
+      <div className="page-header">
+        <div className="page-header-left">
+          <div className="page-header-title">Dashboard Overview</div>
+          <div className="page-header-sub">Real-time health, execution trends, and active workloads</div>
+        </div>
+        {/* no right-side buttons on the header itself — they're in the hero */}
+      </div>
 
-      {/* Sidebar */}
-
-      <aside className="sidebar">
-
-        <h2>
-          <LayoutDashboard size={22} />
-          Cogni k6
-        </h2>
-
-        <ul>
-
-          <li>
-            <LayoutDashboard size={18} />
-            Dashboard
-          </li>
-
-          <li
-            onClick={() =>
-              navigate("/createtest")
-            }
-          >
-            <PlusSquare size={18} />
-            Create Test
-          </li>
-
-          <li
-            onClick={() =>
-              navigate("/run-test")
-            }
-          >
-            <PlayCircle size={18} />
-            Run Test
-          </li>
-
-          <li
-            onClick={() =>
-              navigate("/reports")
-            }
-          >
-            <BarChart3 size={18} />
-            Reports
-          </li>
-
-          <li
-            onClick={() =>
-              navigate("/history")
-            }
-          >
-            <History size={18} />
-            History
-          </li>
-
-          <li
-            className="logout-menu"
-            onClick={handleLogout}
-          >
-            <LogOut size={18} />
-            Logout
-          </li>
-
-        </ul>
-
-      </aside>
-
-      {/* Main */}
-
-      <main className="main-content">
-
-        {/* Header */}
-
-        <div className="topbar">
-
-          <div>
-            <h1>
-              Welcome, {fullName} 👋
-            </h1>
-
+      {/* ═══════════════════════════════════════════════════
+          HERO WELCOME SECTION
+          ═══════════════════════════════════════════════════ */}
+      <div className="dash-hero">
+        <div className="dash-hero-top">
+          <div className="dash-hero-greeting">
+            <h1>Welcome back, {fullName} 👋</h1>
             <p>
-              Manage and Monitor K6
-              Performance Tests
+              Monitor <span style={{ color: "var(--brand-l)" }}>live</span> k6 test suites,
+              track latency trends, and trigger load scenarios with{" "}
+              <span style={{ color: "var(--brand-l)" }}>high concurrency</span>.
             </p>
           </div>
+          <div className="dash-hero-actions">
+            <button className="btn btn-primary" onClick={() => navigate("/createtest")}>
+              <Plus size={14} /> Create Test Scenario
+            </button>
+          </div>
+        </div>
+      </div>
 
+      {/* ═══════════════════════════════════════════════════
+          STAT CARDS  (matches screenshot 1 — dark cards)
+          ═══════════════════════════════════════════════════ */}
+      <div className="dash-stat-row">
+        {/* Configured Tests */}
+        <div className="dash-stat">
+          <div className="dash-stat-top">
+            <div>
+              <div className="dash-stat-label">Configured Tests</div>
+              <div className="dash-stat-value">{stats.total_tests || 0}</div>
+            </div>
+            <div className="dash-stat-icon ds-blue">
+              <FileText size={20} />
+            </div>
+          </div>
+          <div className="dash-stat-sub">Defined scenarios in catalog</div>
         </div>
 
-        {/* Stats */}
-
-        <div className="stats">
-
-          <div className="stat-card">
-
-            <div className="stat-icon">
-              <FileText size={22} />
-            </div>
-
+        {/* Total Executions */}
+        <div className="dash-stat">
+          <div className="dash-stat-top">
             <div>
-              <h2>
-                {stats.total_tests}
-              </h2>
-
-              <p>Total Tests</p>
+              <div className="dash-stat-label">Total Executions</div>
+              <div className="dash-stat-value">{stats.total_runs || 0}</div>
             </div>
-
+            <div className="dash-stat-icon ds-cyan">
+              <Activity size={20} />
+            </div>
           </div>
-
-          <div className="stat-card">
-
-            <div className="stat-icon">
-              <Activity size={22} />
-            </div>
-
-            <div>
-              <h2>
-                {stats.total_runs}
-              </h2>
-
-              <p>Total Executions</p>
-            </div>
-
-          </div>
-
-          <div className="stat-card">
-
-            <div className="stat-icon">
-              <CheckCircle size={22} />
-            </div>
-
-            <div>
-              <h2>
-                {stats.success_rate}%
-              </h2>
-
-              <p>Success Rate</p>
-            </div>
-
-          </div>
-
-          <div className="stat-card">
-
-            <div className="stat-icon">
-              <Clock size={22} />
-            </div>
-
-            <div>
-              <h2>
-                {stats.running_runs}
-              </h2>
-
-              <p>Running Tests</p>
-            </div>
-
-          </div>
-
+          <div className="dash-stat-sub">All-time triggered k6 runs</div>
         </div>
 
-        {/* Recent Tests */}
+        {/* Overall Success Rate */}
+        <div className="dash-stat">
+          <div className="dash-stat-top">
+            <div>
+              <div className="dash-stat-label">Overall Success Rate</div>
+              <div className="dash-stat-value">{successRate.toFixed(2)}%</div>
+            </div>
+            <div className="dash-stat-icon ds-green">
+              <CheckCircle size={20} />
+            </div>
+          </div>
+          <div className="dash-stat-progress">
+            <div className="dash-stat-progress-fill" style={{ width: `${Math.min(successRate, 100)}%` }} />
+          </div>
+        </div>
 
-        <div className="table-section">
+        {/* Active Executions */}
+        <div className="dash-stat">
+          <div className="dash-stat-top">
+            <div>
+              <div className="dash-stat-label">Active Executions</div>
+              <div className="dash-stat-value">{stats.running_runs || 0}</div>
+            </div>
+            <div className="dash-stat-icon ds-amber">
+              <Clock size={20} />
+            </div>
+          </div>
+          <div className="dash-stat-sub">Tests currently executing</div>
+        </div>
+      </div>
 
-          <div className="section-header">
+      {/* ═══════════════════════════════════════════════════
+          BODY: Chart + Recent Table
+          ═══════════════════════════════════════════════════ */}
+      <div className="dash-body">
 
-            <h2>
-              Recent Tests
-            </h2>
+        {/* Execution Trend Chart */}
+        <div className="dash-chart-card">
+          <div className="dash-chart-hdr">
+            <div className="dash-chart-hdr-left">
+              <h3><TrendingUp size={16} /> Execution Performance Trend</h3>
+              <p>Cumulative test executions</p>
+            </div>
+            <div className="dash-chart-legend">
+              <div className="dash-chart-legend-item">
+                <span className="legend-dot" style={{ background: "#ef4444" }} />
+                Failed Runs
+              </div>
+              <div className="dash-chart-legend-item">
+                <span className="legend-dot" style={{ background: "#22c55e" }} />
+                Passed Runs
+              </div>
+            </div>
+          </div>
+          <ExecutionChart />
+        </div>
 
+        {/* Recent Test Scenarios */}
+        <div className="dash-table-card">
+          <div className="dash-table-hdr">
+            <div>
+              <h3>Recent Test Scenarios</h3>
+              <p>Quick access to your latest performance test configurations</p>
+            </div>
+            <button className="dash-view-all" onClick={() => navigate("/run-test")}>
+              View All Tests <ChevronRight size={13} />
+            </button>
           </div>
 
-          <table>
-
-            <thead>
-
-              <tr>
-
-                <th>ID</th>
-
-                <th>Test Name</th>
-
-                <th>Status</th>
-
-                <th>Created At</th>
-
-                <th>Action</th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              {recentTests.length > 0 ? (
-
-                recentTests.map(
-                  (test) => (
-                    <tr key={test.id}>
-
-                      <td>
-                        {test.id}
-                      </td>
-
-                      <td>
-                        {test.test_name}
-                      </td>
-
-                      <td>
-
-                        <span
-                          className={`status-badge ${test.status}`}
-                        >
-                          {test.status}
-                        </span>
-
-                      </td>
-
-                      <td>
-
-                        {new Date(
-                          test.created_at
-                        ).toLocaleDateString()}
-
-                      </td>
-
-                      <td>
-
-                        <button
-                          className="run-btn"
-                          onClick={() =>
-                            navigate(
-                              "/run-test"
-                            )
-                          }
-                        >
-                          Run
-                        </button>
-
-                      </td>
-
-                    </tr>
-                  )
-                )
-
-              ) : (
-
+          {loading ? (
+            <div className="loading-box" style={{ padding: "40px" }}>
+              <div className="spinner" style={{ width: 22, height: 22, border: "2px solid var(--border)", borderTopColor: "var(--brand)", borderRadius: "50%", display: "inline-block" }} />
+            </div>
+          ) : (
+            <table className="data-table">
+              <thead>
                 <tr>
-
-                  <td
-                    colSpan="5"
-                    className="empty"
-                  >
-                    No Tests Available
-                  </td>
-
+                  <th>ID</th>
+                  <th>Scenario Name</th>
+                  <th>Workload</th>
+                  <th>Duration</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th style={{ textAlign: "center" }}>Actions</th>
                 </tr>
-
-              )}
-
-            </tbody>
-
-          </table>
-
+              </thead>
+              <tbody>
+                {recent.length > 0 ? recent.map((t) => (
+                  <tr key={t.id}>
+                    <td style={{ color: "var(--tx3)", fontSize: 12 }}>#{t.id}</td>
+                    <td style={{ fontWeight: 600 }}>{t.test_name}</td>
+                    <td><span className="vu-chip">{t.users} VUs</span></td>
+                    <td style={{ color: "var(--tx2)" }}>{t.duration}s</td>
+                    <td><span className={statusBadge(t.status)}>{t.status}</span></td>
+                    <td style={{ color: "var(--tx3)", fontSize: 12 }}>
+                      {new Date(t.created_at).toLocaleDateString("en-GB", {
+                        day: "2-digit", month: "short", year: "numeric",
+                      })}
+                    </td>
+                    <td style={{ textAlign: "center" }}>
+                      <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
+                        <button
+                          className="btn-run-now"
+                          onClick={() => navigate("/run-test")}
+                        >
+                          <PlayCircle size={13} /> Run Now
+                        </button>
+                        <button
+                          className="btn btn-ghost btn-icon btn-sm"
+                          title="Edit"
+                          onClick={() => navigate(`/createtest/${t.id}`)}
+                        >
+                          <Pencil size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={7}>
+                      <div className="empty-state" style={{ padding: "40px" }}>
+                        <FileText size={32} />
+                        <h3>No test scenarios yet</h3>
+                        <p>Click "Create Test Scenario" to build your first k6 test.</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
-  
-      </main>
 
-    </div>
+      </div>
+    </Layout>
   );
 }
-
-export default Dashboard;

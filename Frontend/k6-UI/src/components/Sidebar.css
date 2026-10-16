@@ -1,0 +1,179 @@
+/* ══════════════════════════════════════════
+   SIDEBAR — matches the dark nav in screenshots
+   ══════════════════════════════════════════ */
+
+.sidebar {
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  width: var(--sidebar-width);
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  display: flex;
+  flex-direction: column;
+  z-index: 200;
+  overflow: hidden;
+}
+
+/* ── Brand ── */
+.sb-brand {
+  padding: 16px 16px 14px;
+  border-bottom: 1px solid var(--sidebar-border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+}
+.sb-brand-icon {
+  width: 32px; height: 32px;
+  background: var(--brand);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 10px rgba(99,102,241,0.4);
+  flex-shrink: 0;
+}
+.sb-brand-text { line-height: 1.25; }
+.sb-brand-name {
+  font-size: 14px; font-weight: 700;
+  color: var(--text-primary); letter-spacing: -0.1px;
+}
+.sb-brand-name span { color: var(--brand-light); }
+.sb-brand-sub {
+  font-size: 10px; font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.08em; text-transform: uppercase;
+}
+
+/* ── Nav ── */
+.sb-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 0;
+  scrollbar-width: none;
+}
+.sb-nav::-webkit-scrollbar { display: none; }
+
+.sb-section { margin-bottom: 2px; }
+.sb-section-label {
+  padding: 8px 16px 3px;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.sb-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 12px 8px 16px;
+  margin: 1px 6px;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: var(--t);
+  color: var(--text-secondary);
+  font-size: 13px; font-weight: 500;
+  text-decoration: none;
+  position: relative;
+  user-select: none;
+  border: 1px solid transparent;
+}
+.sb-item:hover {
+  background: var(--sidebar-item-h);
+  color: var(--text-primary);
+}
+.sb-item.active {
+  background: var(--sidebar-active);
+  color: #a5b4fc;
+  border-color: rgba(99,102,241,0.15);
+}
+.sb-item.active::before {
+  content: '';
+  position: absolute;
+  left: -6px; top: 50%;
+  transform: translateY(-50%);
+  width: 3px; height: 18px;
+  background: var(--sidebar-active-border);
+  border-radius: 0 2px 2px 0;
+}
+
+.sb-item-ico {
+  display: flex; align-items: center; justify-content: center;
+  width: 16px; flex-shrink: 0;
+}
+
+.sb-badge {
+  margin-left: auto;
+  background: var(--brand-dim);
+  color: var(--brand-light);
+  font-size: 9px; font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--r-full);
+  letter-spacing: 0.04em;
+}
+
+.sb-divider {
+  height: 1px;
+  background: var(--sidebar-border);
+  margin: 6px 14px;
+}
+
+/* ── k6 engine status card (bottom of sidebar, like screenshot) ── */
+.sb-engine-card {
+  margin: 8px 10px;
+  background: rgba(34,197,94,0.06);
+  border: 1px solid rgba(34,197,94,0.15);
+  border-radius: var(--r-lg);
+  padding: 10px 12px;
+  flex-shrink: 0;
+}
+.sb-engine-header {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 4px;
+}
+.sb-engine-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green); flex-shrink: 0;
+  box-shadow: 0 0 6px var(--green);
+  animation: blink 1.8s ease infinite;
+}
+.sb-engine-title {
+  font-size: 11px; font-weight: 600; color: var(--green-text);
+}
+.sb-engine-meta {
+  font-size: 10px; color: var(--text-muted); line-height: 1.5;
+}
+
+/* ── Footer / user ── */
+.sb-footer {
+  border-top: 1px solid var(--sidebar-border);
+  padding: 10px;
+  flex-shrink: 0;
+}
+.sb-user {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 8px;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: var(--t);
+}
+.sb-user:hover { background: var(--sidebar-item-h); }
+
+.sb-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand), #818cf8);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600; color: #fff; flex-shrink: 0;
+}
+.sb-user-info { flex: 1; min-width: 0; }
+.sb-user-name {
+  font-size: 12px; font-weight: 500; color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sb-user-role { font-size: 10px; color: var(--text-muted); }
+
+.sb-logout {
+  background: transparent; border: none; cursor: pointer;
+  padding: 4px; border-radius: 5px;
+  color: var(--text-muted); transition: var(--t);
+  display: flex; align-items: center;
+}
+.sb-logout:hover { color: var(--red-text); background: var(--red-dim); }

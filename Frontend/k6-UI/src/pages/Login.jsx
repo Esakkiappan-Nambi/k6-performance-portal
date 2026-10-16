@@ -2,101 +2,107 @@ import React, { useState } from "react";
 import API from "../services/api";
 import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
+import { Mail, Lock, Zap, Activity } from "lucide-react";
 import "./Login.css";
 
-function Login() {
-
+export default function Login() {
   const navigate = useNavigate();
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
 
-  const [loginData, setLoginData] = useState({
-      email: "",
-      password: "",
-  });
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleChange = (e) => {
-    setLoginData({
-      ...loginData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
+    setLoading(true);
     try {
-      const response = await API.post("/login", loginData);
-
-      console.log("Login Response:", response.data);
-      
+      const res = await API.post("/login", form);
       localStorage.clear();
-      sessionStorage.setItem("token", response.data.access_token);
-
-      if (response.data.full_name) {
-        localStorage.setItem("full_name", response.data.full_name);
-      }
-
-      toast.success("Login Successful");
+      sessionStorage.setItem("token", res.data.access_token);
+      if (res.data.full_name) localStorage.setItem("full_name", res.data.full_name);
+      toast.success("Welcome back!");
       navigate("/dashboard");
-
-    } catch (error) {
-      console.log(error);
-
-      toast.error(
-        error.response?.data?.detail ||
-        "Login Failed"
-      );
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Invalid credentials");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
+    <div className="auth-wrap">
+      {/* ── Branding panel ── */}
+      <div className="auth-left">
+        <div className="auth-logo">
+          <div className="auth-logo-icon"><Zap size={20} color="#fff" /></div>
+          <span className="auth-logo-name">K6 <span>Portal</span></span>
+        </div>
 
-        <h1>Cogni k6 Portal</h1>
-        <p className="subtitle">Login to continue</p>
+        <div className="auth-hero">
+          <div className="auth-eyebrow"><Activity size={11} /> Performance Suite</div>
+          <h1>Load test at<br /><em>enterprise scale</em></h1>
+          <p>
+            JMeter-style HTTP recording, Grafana real-time telemetry,
+            intelligent k6 script generation and SLA reporting — all in one platform.
+          </p>
+        </div>
 
-        <form onSubmit={handleLogin}>
+        <div className="auth-features">
+          {[
+            "HTTP(S) Script Recorder — proxy-based",
+            "Grafana + InfluxDB live dashboards",
+            "Swagger / OpenAPI import",
+            "CSV data-driven testing",
+            "PDF reports with assertions",
+          ].map((f) => (
+            <div className="auth-feat" key={f}>
+              <span className="auth-feat-dot" />{f}
+            </div>
+          ))}
+        </div>
+      </div>
 
-          <div className="input-group">
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="Enter your email"
-              value={loginData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
+      {/* ── Form panel ── */}
+      <div className="auth-right">
+        <div className="auth-card">
+          <h2 className="auth-card-title">Sign in</h2>
+          <p className="auth-card-sub">Enter your credentials to access the portal</p>
 
-          <div className="input-group">
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              placeholder="Enter your password"
-              value={loginData.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <div className="auth-field">
+              <label className="auth-label">Email address</label>
+              <div className="auth-input-row">
+                <Mail size={14} className="auth-input-ico" />
+                <input className="auth-inp" type="email" name="email"
+                  placeholder="you@company.com"
+                  value={form.email} onChange={handleChange}
+                  required autoComplete="email" />
+              </div>
+            </div>
 
-          <button type="submit" className="login-btn">
-            Login
-          </button>
+            <div className="auth-field">
+              <label className="auth-label">Password</label>
+              <div className="auth-input-row">
+                <Lock size={14} className="auth-input-ico" />
+                <input className="auth-inp" type="password" name="password"
+                  placeholder="Your password"
+                  value={form.password} onChange={handleChange}
+                  required autoComplete="current-password" />
+              </div>
+            </div>
 
-          <div className="signup-link">
-            <p>
-              New User?{" "}
-              <Link to="/register">Create Account</Link>
-            </p>
-          </div>
+            <button type="submit" className="auth-submit" disabled={loading}>
+              {loading
+                ? <><span className="spinner" style={{ width:15,height:15,border:"2px solid rgba(255,255,255,0.3)",borderTopColor:"#fff",borderRadius:"50%",display:"inline-block" }} /> Signing in…</>
+                : <><Zap size={14} /> Sign In</>}
+            </button>
+          </form>
 
-        </form>
-
+          <p className="auth-foot">
+            New here? <Link to="/register">Create an account</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
 }
-
-export default Login;

@@ -1,14 +1,11 @@
 import { useNavigate, useParams } from "react-router-dom";
 import React, { useState, useEffect, useRef } from "react";
-<<<<<<< HEAD
-import { GripVertical, Clock, Globe, Zap, Edit3, Info, Play, ChevronDown, ChevronUp, Search, Link2, Loader2, AlertCircle } from "lucide-react";
-=======
-import { GripVertical, Clock, Globe, Zap, Edit3, Info, Play, ChevronDown, ChevronUp, Search } from "lucide-react";
->>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
+import { GripVertical, Clock, Globe, Zap, Edit3, Info, Play, ChevronDown, ChevronUp, Search, Link2, Loader2, AlertCircle, Activity, Plus as PlusIcon } from "lucide-react";
 import API from "../services/api";
 import { FilePlus, PlayCircle, ArrowLeft, Plus, Trash2, Copy } from "lucide-react";
 import { toast } from "react-toastify";
 import "./CreateTest.css";
+import Layout from "../components/Layout";
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import { SortableContext,verticalListSortingStrategy,arrayMove,useSortable,} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -160,7 +157,6 @@ function CreateTest() {
     inject_auth: false,
   });
 
-<<<<<<< HEAD
   // ── NEW: Swagger / OpenAPI import state ───────────────────────────────────
   // Mirrors the "Auto Capture" state above, but the source of steps is a
   // swagger.json / openapi.json URL instead of a live browser capture.
@@ -170,9 +166,6 @@ function CreateTest() {
   const [discoveredApis, setDiscoveredApis] = useState([]); // [{method, path, summary, full_url, ...}]
   const [selectedApiIndexes, setSelectedApiIndexes] = useState(new Set());
   const [importingApis, setImportingApis] = useState(false);
-
-=======
->>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
   // ── Step Preview state (JMeter "View Results Tree" style) ────────────────
   // stepPreviews: { [stepId]: { loading, error, expanded, response, extractedValue, viewMode, searchTerm } }
   const [stepPreviews, setStepPreviews] = useState({});
@@ -246,6 +239,20 @@ function CreateTest() {
   useEffect(() => {
     if (id) loadTestData();
   }, [id]);
+
+  // Load steps imported from the HTTP Recorder
+  useEffect(() => {
+    const imported = sessionStorage.getItem("recorder_import");
+    if (imported && !id) {
+      try {
+        const steps = JSON.parse(imported);
+        setScenario(steps);
+        setMode("manual");
+        sessionStorage.removeItem("recorder_import");
+        toast.success(`${steps.length} request(s) imported from HTTP Recorder`);
+      } catch { /* ignore */ }
+    }
+  }, []);
 
   const loadTestData = async () => {
     try {
@@ -353,7 +360,6 @@ function CreateTest() {
     toast.success(`${normalised.length} step(s) imported into scenario builder`);
   };
 
-<<<<<<< HEAD
   // ── NEW: Swagger / OpenAPI import handlers ────────────────────────────────
   // Same shape as the Auto Capture handlers above: discover -> select ->
   // import into the manual scenario builder.
@@ -454,8 +460,6 @@ function CreateTest() {
     }
   };
 
-=======
->>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
   // ── Form helpers ──────────────────────────────────────────────────────────
 
   const updateSchedule = (field, value) =>
@@ -756,52 +760,69 @@ function CreateTest() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
+    <Layout>
     <div className="create-test-page">
-      {/* Inline styles for the JSON Path Finder — move these into CreateTest.css
-          any time; kept here so the feature works immediately. */}
-      <style>{`
-        .json-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
-        .json-view-toggle { display: inline-flex; border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; }
-        .json-view-btn { background: #fff; border: none; padding: 4px 12px; font-size: 12px; cursor: pointer; color: #6b7280; }
-        .json-view-btn.active { background: #eef2ff; color: #4338ca; font-weight: 600; }
-        .json-view-btn + .json-view-btn { border-left: 1px solid #d1d5db; }
-        .json-search-box { display: flex; align-items: center; gap: 6px; border: 1px solid #d1d5db; border-radius: 6px; padding: 3px 8px; background: #fff; flex: 1; min-width: 180px; max-width: 280px; }
-        .json-search-box input { border: none; outline: none; font-size: 12px; width: 100%; }
-        .json-tree-wrapper { max-height: 340px; overflow: auto; background: #0f172a; border-radius: 8px; padding: 10px 12px; font-family: "SFMono-Regular", Consolas, Menlo, monospace; font-size: 12.5px; }
-        .json-tree { color: #cbd5e1; line-height: 1.65; }
-        .json-node-key, .json-leaf { white-space: nowrap; }
-        .json-key-label { color: #93c5fd; }
-        .json-bracket { color: #64748b; }
-        .json-value-btn { background: none; border: none; color: #86efac; cursor: pointer; padding: 0 2px; font: inherit; border-radius: 3px; }
-        .json-value-btn:hover { background: #1e293b; text-decoration: underline; }
-        .json-path-hint { color: #475569; margin-left: 8px; font-size: 11px; opacity: 0; transition: opacity 0.1s; }
-        .json-leaf:hover .json-path-hint { opacity: 1; }
-        .json-match { background: #78350f; border-radius: 3px; }
-      `}</style>
 
-      <div className="create-header">
-        <button className="back-btn" onClick={() => navigate("/dashboard")}>
-          <ArrowLeft size={16} /> Back
-        </button>
-        <h2>
-          <FilePlus size={18} />
-          {id ? "Edit Test" : "Create Scenario Test"}
-        </h2>
+      {/* ── PAGE HEADER (matches screenshot 2) ── */}
+      <div className="page-header">
+        <div className="page-header-left">
+          <div className="page-header-title">Scenario Studio</div>
+          <div className="page-header-sub">Design virtual user transactions, assertions, and test pipelines</div>
+        </div>
+        <div className="page-header-right">
+          <button className="btn btn-primary" onClick={() => navigate("/createtest")}>
+            <Plus size={14} /> New Test
+          </button>
+          <div style={{ display:"flex",alignItems:"center",gap:8,background:"var(--bg3)",border:"1px solid var(--border)",borderRadius:"var(--r)",padding:"6px 14px",fontSize:13,color:"var(--tx2)" }}>
+            <div style={{ width:8,height:8,borderRadius:"50%",background:"var(--brand)",flexShrink:0 }} />
+            {localStorage.getItem("full_name") || "User"}
+          </div>
+        </div>
       </div>
 
-      <div className="mode-tabs">
-        <button type="button" className={`mode-tab ${mode === "manual" ? "mode-tab--active" : ""}`} onClick={() => setMode("manual")}>
-          <Edit3 size={15} /> Manual Entry
+      {/* ── Scenario Studio inner header ── */}
+      <div style={{ background:"var(--bg3)",borderBottom:"1px solid var(--border)",padding:"16px 24px" }}>
+        <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:8 }}>
+          <Zap size={14} style={{ color:"var(--brand-l)" }} />
+          <span style={{ fontSize:11,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"var(--tx3)" }}>SCENARIO STUDIO</span>
+        </div>
+        <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",gap:14,flexWrap:"wrap" }}>
+          <div style={{ fontSize:22,fontWeight:700,color:"var(--tx)" }}>
+            {id ? "Edit Test Scenario" : "Performance Test Scenario"}
+          </div>
+          <div style={{ display:"flex",gap:8 }}>
+            <button className="btn btn-ghost" onClick={() => navigate("/run-test")}>Cancel</button>
+            <button className="btn btn-primary" form="ct-form" type="submit">
+              <FilePlus size={14} /> Save &amp; Proceed
+            </button>
+          </div>
+        </div>
+        {/* Summary bar */}
+        <div className="ct-summary-bar" style={{ marginTop:12 }}>
+          <span>Virtual Users: <strong>{formData.users || 0} VUs</strong></span>
+          <span>Duration: <strong>{formData.duration || 0}s</strong></span>
+          <span>Ramp-Up: <strong>{formData.rampUp || 0}s</strong></span>
+          <span>Steps Count: <strong>{scenario.filter(s=>s.enabled).length} HTTP steps</strong></span>
+        </div>
+      </div>
+
+      {/* ── Mode tabs (matches screenshot 2 tabs) ── */}
+      <div className="ct-tabs" style={{ background:"var(--bg2)",padding:"0 24px" }}>
+        <button type="button" className={`ct-tab${mode === "manual" ? " active" : ""}`} onClick={() => setMode("manual")}>
+          <Globe size={14} /> HTTP Scenario Steps ({scenario.length})
         </button>
-        <button type="button" className={`mode-tab ${mode === "auto" ? "mode-tab--active" : ""}`} onClick={() => setMode("auto")}>
-          <Zap size={15} /> Auto Capture from URL
+        <button type="button" className={`ct-tab${mode === "workload" ? " active" : ""}`} onClick={() => setMode("workload")}>
+          <Activity size={14} /> Workload &amp; Execution
         </button>
-<<<<<<< HEAD
-        <button type="button" className={`mode-tab ${mode === "swagger" ? "mode-tab--active" : ""}`} onClick={() => setMode("swagger")}>
-          <Link2 size={15} /> Import from Swagger
+        <button type="button" className={`ct-tab${mode === "engine" ? " active" : ""}`} onClick={() => setMode("engine")}>
+          <Zap size={14} /> Engine &amp; Parameters
         </button>
-=======
->>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
+        <button type="button" className={`ct-tab${mode === "auto" ? " active" : ""}`} onClick={() => setMode("auto")}>
+          <Search size={14} /> Auto Capture
+        </button>
+        <button type="button" className={`ct-tab${mode === "swagger" ? " active" : ""}`} onClick={() => setMode("swagger")}>
+          <Link2 size={14} /> Import Swagger
+        </button>
       </div>
 
       {mode === "auto" && (
@@ -901,7 +922,6 @@ function CreateTest() {
         </div>
       )}
 
-<<<<<<< HEAD
       {/* ── NEW: Import from Swagger / OpenAPI ─────────────────────────────
           Same discover → select → import flow as Auto Capture above, but the
           source is a swagger.json / openapi.json URL instead of a live
@@ -1001,15 +1021,100 @@ function CreateTest() {
         </div>
       )}
 
-=======
->>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
-      {mode === "manual" && (
-        <form className="create-form" onSubmit={handleSubmit}>
-          <p className="section-label">Test configuration</p>
+      {(mode === "workload") && (
+        <form id="ct-form" className="create-form" onSubmit={handleSubmit}>
+          <p className="section-label">Workload &amp; Execution Settings</p>
           <div className="form-grid">
-            <div className="form-group"><label>Test name</label><input type="text" name="testName" value={formData.testName} onChange={handleChange} /></div>
-            <div className="form-group"><label>Virtual users</label><input type="number" name="users" value={formData.users} onChange={handleChange} /></div>
-            <div className="form-group"><label>Ramp-up (sec)</label><input type="number" name="rampUp" value={formData.rampUp} onChange={handleChange} /></div>
+            <div className="form-group"><label>Test Name</label><input type="text" name="testName" value={formData.testName} onChange={handleChange} placeholder="My Performance Test" /></div>
+            <div className="form-group"><label>Virtual Users (VUs)</label><input type="number" name="users" value={formData.users} onChange={handleChange} min={1} /></div>
+            <div className="form-group"><label>Ramp-Up (sec)</label><input type="number" name="rampUp" value={formData.rampUp} onChange={handleChange} min={0} /></div>
+            <div className="form-group"><label>Duration (sec)</label><input type="number" name="duration" value={formData.duration} onChange={handleChange} min={1} /></div>
+            <div className="form-group"><label>Loop Count</label><input type="number" name="loopCount" value={formData.loopCount} onChange={handleChange} min={1} /></div>
+          </div>
+          <hr className="section-divider" />
+          <p className="section-label"><input type="checkbox" name="enableAssertions" checked={formData.enableAssertions} onChange={handleChange} style={{ marginRight:6 }} />Global Assertions / SLA Thresholds</p>
+          {formData.enableAssertions && (
+            <div className="form-grid">
+              <div className="form-group"><label>Expected Status Code</label><input type="number" name="status_code" value={formData.assertions.status_code} onChange={handleChange} /></div>
+              <div className="form-group"><label>Max Response Time (ms)</label><input type="number" name="max_response_time" value={formData.assertions.max_response_time} onChange={handleChange} /></div>
+              <div className="form-group"><label>Max Error Rate (%)</label><input type="number" name="max_error_rate" value={formData.assertions.max_error_rate} onChange={handleChange} /></div>
+            </div>
+          )}
+          <button type="submit" className="submit-btn"><FilePlus size={15} /> {id ? "Update Test" : "Save &amp; Proceed"}</button>
+        </form>
+      )}
+
+      {(mode === "engine") && (
+        <form id="ct-form" className="create-form" onSubmit={handleSubmit}>
+          <p className="section-label">Engine &amp; Parameters</p>
+          <p className="section-label"><input type="checkbox" name="enableScheduling" checked={formData.enableScheduling} onChange={handleChange} style={{ marginRight:6 }} />Enable Scheduling (JMeter Scheduler)</p>
+          {formData.enableScheduling && (
+            <div className="schedule-box" style={{ background:"var(--bg3)",border:"1px solid var(--border)",borderRadius:"var(--r2)",padding:"14px 16px",marginBottom:14 }}>
+              <div className="schedule-grid" style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14 }}>
+                <div className="form-group"><label>Start Time</label><input type="datetime-local" value={formData.schedule.startTime} onChange={(e) => updateSchedule("startTime", e.target.value)} /></div>
+                <div className="form-group"><label>Frequency</label>
+                  <select value={formData.schedule.frequency} onChange={(e) => updateSchedule("frequency", e.target.value)}>
+                    <option value="once">Once</option><option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option><option value="monthly">Monthly</option>
+                  </select>
+                </div>
+                <div className="form-group"><label>End Time (Optional)</label><input type="datetime-local" value={formData.schedule.endTime} onChange={(e) => updateSchedule("endTime", e.target.value)} /></div>
+              </div>
+            </div>
+          )}
+          <hr className="section-divider" />
+          <p className="section-label"><input type="checkbox" name="enableUserDefinedVariables" checked={formData.enableUserDefinedVariables} onChange={handleChange} style={{ marginRight:6 }} />User Defined Variables (UDV)</p>
+          {formData.enableUserDefinedVariables && (
+            <div className="udv-box" style={{ background:"var(--bg3)",border:"1px solid var(--border)",borderRadius:"var(--r2)",padding:"14px 16px",marginBottom:14 }}>
+              {formData.userDefinedVariables.map((v) => (
+                <div key={v.id} style={{ display:"grid",gridTemplateColumns:"20px 1fr 1fr 1.5fr 26px",gap:8,marginBottom:8,alignItems:"center",opacity:v.enabled?1:0.5 }}>
+                  <input type="checkbox" checked={v.enabled} onChange={(e) => updateUDV(v.id, "enabled", e.target.checked)} />
+                  <input className="full-width" style={{ background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:"var(--r)",color:"var(--tx)",fontSize:12,padding:"6px 9px" }} placeholder="Name" value={v.name} disabled={!v.enabled} onChange={(e) => updateUDV(v.id, "name", e.target.value)} />
+                  <input className="full-width" style={{ background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:"var(--r)",color:"var(--tx)",fontSize:12,padding:"6px 9px" }} placeholder="Value" value={v.value} disabled={!v.enabled} onChange={(e) => updateUDV(v.id, "value", e.target.value)} />
+                  <input className="full-width" style={{ background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:"var(--r)",color:"var(--tx)",fontSize:12,padding:"6px 9px" }} placeholder="Description" value={v.description} disabled={!v.enabled} onChange={(e) => updateUDV(v.id, "description", e.target.value)} />
+                  <button type="button" style={{ background:"var(--red-dim)",color:"var(--red-tx)",border:"none",borderRadius:"var(--r)",cursor:"pointer",padding:"5px",display:"flex",alignItems:"center" }} onClick={() => removeUDV(v.id)}><Trash2 size={12} /></button>
+                </div>
+              ))}
+              <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop:8 }} onClick={addUDV}><Plus size={13} /> Add Variable</button>
+            </div>
+          )}
+          <hr className="section-divider" />
+          <p className="section-label"><input type="checkbox" name="enableCsvConfig" checked={formData.enableCsvConfig} onChange={handleChange} style={{ marginRight:6 }} />CSV Data Configuration</p>
+          {formData.enableCsvConfig && (
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14 }}>
+              <div className="form-group"><label>CSV File</label><input type="file" name="csv_file" accept=".csv" onChange={handleChange} style={{ background:"var(--bg3)",border:"1px solid var(--border)",borderRadius:"var(--r)",color:"var(--tx)",padding:"8px 12px",fontSize:12 }} /></div>
+              <div className="form-group"><label>Variable Names (comma-separated)</label><input type="text" name="variable_name" value={formData.csvConfig.variable_name} onChange={handleChange} placeholder="username,password" /></div>
+            </div>
+          )}
+          <hr className="section-divider" />
+          <p className="section-label"><input type="checkbox" name="enableCookieManager" checked={formData.enableCookieManager} onChange={handleChange} style={{ marginRight:6 }} />HTTP Cookie Manager</p>
+          {formData.enableCookieManager && (
+            <label style={{ display:"flex",alignItems:"center",gap:8,fontSize:13,color:"var(--tx2)",marginBottom:14 }}>
+              <input type="checkbox" checked={formData.cookieConfig.clearEachIteration} onChange={(e) => setFormData({ ...formData, cookieConfig: { ...formData.cookieConfig, clearEachIteration: e.target.checked } })} />
+              Clear cookies each iteration
+            </label>
+          )}
+          <hr className="section-divider" />
+          <p className="section-label"><input type="checkbox" name="enableCacheManager" checked={formData.enableCacheManager} onChange={handleChange} style={{ marginRight:6 }} />HTTP Cache Manager</p>
+          {formData.enableCacheManager && (
+            <div style={{ display:"flex",alignItems:"center",gap:16,marginBottom:14,flexWrap:"wrap" }}>
+              <label style={{ display:"flex",alignItems:"center",gap:8,fontSize:13,color:"var(--tx2)" }}>
+                <input type="checkbox" checked={formData.cacheConfig.clearEachIteration} onChange={(e) => setFormData({ ...formData, cacheConfig: { ...formData.cacheConfig, clearEachIteration: e.target.checked } })} />
+                Clear cache each iteration
+              </label>
+              <div className="form-group" style={{ flex:1,maxWidth:200 }}>
+                <label>Max Cache Entries</label>
+                <input type="number" min="1" max="5000" value={formData.cacheConfig.maxSize} onChange={(e) => setFormData({ ...formData, cacheConfig: { ...formData.cacheConfig, maxSize: Number(e.target.value) } })} />
+              </div>
+            </div>
+          )}
+          <button type="submit" className="submit-btn"><FilePlus size={15} /> {id ? "Update Test" : "Save &amp; Proceed"}</button>
+        </form>
+      )}
+      {mode === "manual" && (
+        <form id="ct-form" className="create-form" onSubmit={handleSubmit}>
+          <p className="section-label">HTTP Transaction Pipeline</p>
+          <p style={{ fontSize:12, color:"var(--tx2)", marginBottom:14 }}>Drag and reorder requests to build simulated end-user journeys</p>
             <div className="form-group"><label>Duration (sec)</label><input type="number" name="duration" value={formData.duration} onChange={handleChange} /></div>
             <div className="form-group"><label>Loop count</label><input type="number" name="loopCount" value={formData.loopCount} onChange={handleChange} /></div>
           </div>
@@ -1481,6 +1586,7 @@ function CreateTest() {
         </form>
       )}
     </div>
+    </Layout>
   );
 }
 
