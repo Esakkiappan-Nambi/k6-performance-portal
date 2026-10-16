@@ -1,6 +1,4 @@
 {
-<<<<<<< HEAD
-=======
   "root_group": {
     "id": "d41d8cd98f00b204e9800998ecf8427e",
     "groups": [],
@@ -70,7 +68,6 @@
         "min": 0,
         "med": 0,
         "max": 143.5766
-=======
     "testRunDurationMs": 24597.5025
   },
   "metrics": {
@@ -415,7 +412,6 @@
         "min": 5,
         "max": 5
       }
-<<<<<<< HEAD
     }
   },
   "root_group": {
@@ -551,7 +547,6 @@
           "fails": 0
         }
       ]
-=======
     },
     "vus": {
       "type": "gauge",
@@ -562,6 +557,5 @@
         "max": 5
       }
     }
->>>>>>> 12661e306beed1a3faafbec5438b9bfcf1c0d603
   }
 }
