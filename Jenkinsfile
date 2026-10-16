@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         SONAR_HOST_URL    = 'http://host.docker.internal:9000'
-        SONAR_PROJECT_KEY = 'k6'
+        SONAR_PROJECT_KEY = 'k6-1'
         REPORT_DIR        = 'security-reports'
         TOOLS_BIN         = "${WORKSPACE}/.tools/bin"
         PATH              = "${WORKSPACE}/.tools/bin:${HOME}/.local/bin:${PATH}"
