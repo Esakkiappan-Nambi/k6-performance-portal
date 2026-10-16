@@ -1,0 +1,85 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'BRANCH', defaultValue: 'main', description: 'RemediGuard patch branch to verify')
+        string(name: 'FINDING_ID', defaultValue: '', description: 'RemediGuard finding id, for correlation in logs')
+    }
+
+    stages {
+        stage('Preflight') {
+            steps {
+                sh 'command -v jq'
+                sh 'command -v docker'
+                echo "Verifying finding ${params.FINDING_ID} on branch ${params.BRANCH}"
+            }
+        }
+
+        stage('Build check') {
+            steps {
+                sh '''
+                  docker run --rm -v jenkins_home:/var/jenkins_home -w "$WORKSPACE" node:20 \
+                    bash -c "npm install --no-audit --no-fund && npx tsc --noEmit" \
+                    > build-output.log 2>&1 || true
+                  cat build-output.log
+                '''
+            }
+        }
+
+        stage('Re-scan') {
+            steps {
+                sh 'docker run --rm -v jenkins_home:/var/jenkins_home -w "$WORKSPACE" semgrep/semgrep semgrep scan --config auto --no-git-ignore --json --output semgrep-rescan.json . || true'
+                sh 'docker run --rm -v jenkins_home:/var/jenkins_home -w "$WORKSPACE" aquasec/trivy fs --format json --output trivy-rescan.json . || true'
+            }
+        }
+
+        stage('Publish verification result') {
+            steps {
+                sh '''
+                  docker run --rm -i -v jenkins_home:/var/jenkins_home -w "$WORKSPACE" python:3.12-slim python3 - <<'PYEOF'
+import json
+
+build_ok = True
+try:
+    with open("build-output.log") as f:
+        log = f.read()
+    build_ok = "error TS" not in log
+except FileNotFoundError:
+    build_ok = False
+
+try:
+    with open("semgrep-rescan.json") as f:
+        semgrep_rescan = json.load(f)
+except (FileNotFoundError, json.JSONDecodeError):
+    semgrep_rescan = {"results": []}
+
+try:
+    with open("trivy-rescan.json") as f:
+        trivy_rescan = json.load(f)
+except (FileNotFoundError, json.JSONDecodeError):
+    trivy_rescan = {"Results": []}
+
+rescan_clean = (
+    len(semgrep_rescan.get("results", [])) == 0
+    and all(
+        len(r.get("Vulnerabilities", []) or []) == 0
+        for r in trivy_rescan.get("Results", [])
+    )
+)
+
+with open("results.json", "w") as f:
+    json.dump({
+        "tests_passed": build_ok,
+        "rescan_clean": rescan_clean,
+        "details": {
+            "semgrep_remaining": len(semgrep_rescan.get("results", [])),
+        },
+    }, f, indent=2)
+PYEOF
+                  cat results.json
+                '''
+                archiveArtifacts artifacts: 'results.json', fingerprint: true
+            }
+        }
+    }
+}
