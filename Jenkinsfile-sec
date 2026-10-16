@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         REMEDIGUARD_URL     = 'http://host.docker.internal:8000'
-        REPO_SLUG           = 'Esakkiappan-Nambi/mobile-testing'
+        REPO_SLUG           = 'Esakkiappan-Nambi/k6-performance-portal'
         JENKINS_HOME_VOLUME = 'jenkins_home'
     }
 
