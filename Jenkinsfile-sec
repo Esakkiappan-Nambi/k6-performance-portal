@@ -66,17 +66,7 @@ post {
 }
         }
 
-        stage('Generate lockfile') {
-            steps {
-                sh '''
-                  docker run --rm \
-                    -v "${JENKINS_HOME_VOLUME}:/var/jenkins_home" \
-                    -w "${WORKSPACE}" \
-                    node:20 \
-                    npm install --package-lock-only --no-audit --no-fund
-                '''
-            }
-        }
+    
 
         stage('Trivy Dependency Scan') {
             steps {
