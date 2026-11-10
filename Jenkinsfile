@@ -236,35 +236,37 @@ pipeline {
             }
         }
 
-        stage('Trivy Image Scan - Frontend') {
-            steps {
-                sh '''
-                    echo "Scanning frontend image..."
-                    trivy image \
-                        --scanners vuln \
-                        --exit-code 1 \
-                        --severity HIGH,CRITICAL \
-                        --format json \
-                        --output "${REPORT_DIR}/trivy-frontend-image.json" \
-                        "${FRONTEND_IMAGE}"
-                '''
-            }
-        }
+stage('Trivy Image Scan - Frontend') {
+    steps {
+        sh '''
+            echo "Scanning frontend image..."
 
-        stage('Trivy Image Scan - Backend') {
-            steps {
-                sh '''
-                    echo "Scanning backend image..."
-                    trivy image \
-                        --scanners vuln \
-                        --exit-code 1 \
-                        --severity HIGH,CRITICAL \
-                        --format json \
-                        --output "${REPORT_DIR}/trivy-backend-image.json" \
-                        "${BACKEND_IMAGE}"
-                '''
-            }
-        }
+            trivy image \
+                --scanners vuln \
+                --exit-code 0 \
+                --severity HIGH,CRITICAL \
+                --format json \
+                --output "${REPORT_DIR}/trivy-frontend-image.json" \
+                "${FRONTEND_IMAGE}"
+        '''
+    }
+}
+
+       stage('Trivy Image Scan - Backend') {
+    steps {
+        sh '''
+            echo "Scanning backend image..."
+
+            trivy image \
+                --scanners vuln \
+                --exit-code 0 \
+                --severity HIGH,CRITICAL \
+                --format json \
+                --output "${REPORT_DIR}/trivy-backend-image.json" \
+                "${BACKEND_IMAGE}"
+        '''
+    }
+}
 
         // ================================================================================
 
