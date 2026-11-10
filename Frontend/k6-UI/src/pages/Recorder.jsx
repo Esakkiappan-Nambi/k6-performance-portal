@@ -21,10 +21,8 @@ const statusClass = (code) => {
 
 const fmt = (ms) => ms >= 1000 ? `${(ms / 1000).toFixed(2)}s` : `${ms}ms`;
 
-const STORAGE_KEY = "k6_recorder_sessions_v2";
-
 const createDefaultSession = (name, port = 8888, filter = "") => ({
-  id: Date.now(),
+  id: null,
   name: name || "Default Recording Session",
   proxyPort: port,
   filter: filter,
@@ -68,23 +66,10 @@ export default function Recorder() {
   const navigate = useNavigate();
   const fileRef  = useRef();
 
-  // Load initial sessions from localStorage if present
-  const [sessions, setSessions] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      }
-    } catch (e) {
-      console.warn("Could not load stored recorder sessions", e);
-    }
-    return [createDefaultSession("Session 1 (Initial)")];
-  });
-
-  const [activeId, setActiveId]         = useState(() => sessions[0]?.id || Date.now());
+  const [sessions, setSessions] = useState([]);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [sessionLoadError, setSessionLoadError] = useState("");
+  const [activeId, setActiveId] = useState(null);
   const [showModal, setShowModal]       = useState(false);
   const [newName, setNewName]           = useState("");
   const [newPort, setNewPort]           = useState(8888);
@@ -95,65 +80,78 @@ export default function Recorder() {
   const [converting, setConverting]     = useState(false);
   const pollRef = useRef(null);
 
-  const activeSession = sessions.find((s) => s.id === activeId) || sessions[0] || createDefaultSession("Session 1");
+  const activeSession = sessions.find((s) => s.id === activeId) || sessions[0] || null;
 
-  // Save sessions to localStorage whenever they change
+  // The backend owns session storage; remove the previous browser-wide cache.
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
-    } catch (e) {
-      console.warn("Could not persist sessions to localStorage", e);
+      localStorage.removeItem("k6_recorder_sessions_v2");
+    } catch (err) {
+      console.warn("Could not remove the legacy shared recorder cache:", err);
     }
-  }, [sessions]);
+    let active = true;
 
-  // Sync with backend on component mount
-  useEffect(() => {
     const fetchBackendSessions = async () => {
       try {
         const res = await API.get("/recorder/sessions");
-        if (res.data?.sessions && Array.isArray(res.data.sessions) && res.data.sessions.length > 0) {
-          const backendList = res.data.sessions;
-          
-          setSessions((currentLocal) => {
-            const merged = [...currentLocal];
-            backendList.forEach((bs) => {
-              const existingIdx = merged.findIndex((ls) => ls.id === bs.id);
-              if (existingIdx >= 0) {
-                merged[existingIdx] = {
-                  ...merged[existingIdx],
-                  name: bs.name || merged[existingIdx].name,
-                  proxyPort: bs.port || merged[existingIdx].proxyPort,
-                  filter: bs.filter ?? merged[existingIdx].filter,
-                  status: bs.status || merged[existingIdx].status,
-                };
-              } else {
-                merged.push({
-                  id: bs.id,
-                  name: bs.name || `Session ${bs.id}`,
-                  proxyPort: bs.port || 8888,
-                  filter: bs.filter || "",
-                  status: bs.status || "stopped",
-                  requests: [],
-                  createdAt: bs.created_at || new Date().toISOString(),
-                });
-              }
-            });
-            return merged;
+        let backendSessions = Array.isArray(res.data?.sessions) ? res.data.sessions : [];
+
+        if (backendSessions.length === 0) {
+          const initial = createDefaultSession("Session 1 (Initial)");
+          const created = await API.post("/recorder/session/save", {
+            name: initial.name,
+            port: initial.proxyPort,
+            filter: initial.filter,
+            requests: [],
           });
+          backendSessions = [{
+            id: created.data.session_id,
+            name: initial.name,
+            port: initial.proxyPort,
+            filter: initial.filter,
+            status: "stopped",
+            request_count: 0,
+            created_at: initial.createdAt,
+          }];
+        }
+
+        if (active) {
+          const ownedSessions = backendSessions.map((session) => ({
+            id: session.id,
+            name: session.name || `Session ${session.id}`,
+            proxyPort: session.port || 8888,
+            filter: session.filter || "",
+            status: session.status || "stopped",
+            requests: [],
+            createdAt: session.created_at || new Date().toISOString(),
+          }));
+          setSessions(ownedSessions);
+          setActiveId(ownedSessions[0]?.id ?? null);
+          setSessionLoadError("");
         }
       } catch (err) {
-        console.warn("Backend /recorder/sessions not reachable yet:", err);
+        console.error("Could not load the current user's recorder sessions:", err);
+        if (active) {
+          const message = err.response?.data?.detail || "Could not load your saved recordings.";
+          setSessionLoadError(message);
+          toast.error(message);
+        }
+      } finally {
+        if (active) setSessionsLoading(false);
       }
     };
 
     fetchBackendSessions();
+    return () => {
+      active = false;
+    };
   }, []);
 
   // Reload the selected session from persistent storage, not a stale local copy.
   useEffect(() => {
     let active = true;
     const loadSessionRequests = async () => {
-      if (!activeId) return;
+      if (activeId == null) return;
       try {
         const res = await API.get(`/recorder/session/${activeId}/requests`);
         if (active && Array.isArray(res.data?.requests)) {
@@ -306,16 +304,8 @@ export default function Recorder() {
         toast.error("No valid HTTP entries found in HAR file");
         return;
       }
+      if (!activeSession) return;
       const updatedRequests = [...(activeSession.requests || []), ...parsed];
-      setSessions((prev) =>
-        prev.map((s) =>
-          s.id === activeId
-            ? { ...s, requests: updatedRequests, status: "stopped" }
-            : s
-        )
-      );
-
-      // Persist to backend
       try {
         await API.post("/recorder/session/save", {
           session_id: activeId,
@@ -324,11 +314,17 @@ export default function Recorder() {
           filter: activeSession.filter,
           requests: updatedRequests,
         });
-      } catch {
-        // ignore
+        setSessions((prev) =>
+          prev.map((s) =>
+            s.id === activeId
+              ? { ...s, requests: updatedRequests, status: "stopped" }
+              : s
+          )
+        );
+        toast.success(`Imported and saved ${parsed.length} request(s) from ${file.name}`);
+      } catch (err) {
+        toast.error(err.response?.data?.detail || "Could not save imported requests.");
       }
-
-      toast.success(`Imported and saved ${parsed.length} request(s) from ${file.name}`);
     };
     reader.readAsText(file);
     e.target.value = "";
@@ -336,7 +332,7 @@ export default function Recorder() {
 
   /* ── Export session to JSON or HAR ── */
   const exportSessionJSON = () => {
-    if (!activeSession.requests.length) {
+    if (!activeSession?.requests?.length) {
       toast.error("No requests to export");
       return;
     }
@@ -350,7 +346,7 @@ export default function Recorder() {
 
   /* ── convert to k6 / import into scenario builder ── */
   const convertToScenario = async () => {
-    if (!activeSession.requests.length) {
+    if (!activeSession?.requests?.length) {
       toast.error("No requests to convert");
       return;
     }
@@ -399,27 +395,24 @@ export default function Recorder() {
   const createSession = async () => {
     const name = newName.trim() || `Session ${sessions.length + 1}`;
     const s = createDefaultSession(name, newPort, newFilter.trim());
-    
-    // Save to backend
     try {
-      await API.post("/recorder/session/save", {
-        session_id: s.id,
+      const { data } = await API.post("/recorder/session/save", {
         name: s.name,
         port: s.proxyPort,
         filter: s.filter,
         requests: [],
       });
-    } catch {
-      // ignore
+      const createdSession = { ...s, id: data.session_id, status: "stopped" };
+      setSessions((prev) => [createdSession, ...prev]);
+      setActiveId(createdSession.id);
+      setShowModal(false);
+      setNewName("");
+      setNewPort(8888);
+      setNewFilter("");
+      toast.success(`Created session "${name}"`);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Could not create recorder session.");
     }
-
-    setSessions((prev) => [s, ...prev]);
-    setActiveId(s.id);
-    setShowModal(false);
-    setNewName("");
-    setNewPort(8888);
-    setNewFilter("");
-    toast.success(`Created session "${name}"`);
   };
 
   /* ── delete session ── */
@@ -430,8 +423,9 @@ export default function Recorder() {
     }
     try {
       await API.delete(`/recorder/session/${id}`);
-    } catch {
-      // ignore
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Could not delete recorder session.");
+      return;
     }
     const remaining = sessions.filter((s) => s.id !== id);
     setSessions(remaining);
@@ -442,13 +436,39 @@ export default function Recorder() {
   };
 
   /* ── filtered requests ── */
-  const filtered = (activeSession.requests || []).filter((r) => {
+  const filtered = (activeSession?.requests || []).filter((r) => {
     const matchesMethod = methodFilter === "ALL" || r.method === methodFilter;
     const matchesSearch = !searchFilter.trim() || r.url.toLowerCase().includes(searchFilter.toLowerCase());
     return matchesMethod && matchesSearch;
   });
 
   const METHODS = ["ALL", "GET", "POST", "PUT", "PATCH", "DELETE"];
+
+  if (sessionsLoading) {
+    return (
+      <Layout>
+        <div className="loading-box" role="status">
+          <RefreshCw size={24} className="spinner" />
+          <p>Loading your saved recordings…</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (sessionLoadError || !activeSession) {
+    return (
+      <Layout>
+        <div className="empty-state" role="alert">
+          <Database size={28} />
+          <h3>Recorder sessions are unavailable</h3>
+          <p>{sessionLoadError || "Create a recorder session to get started."}</p>
+          <button className="btn btn-primary" onClick={() => window.location.reload()}>
+            <RefreshCw size={13} /> Try again
+          </button>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
