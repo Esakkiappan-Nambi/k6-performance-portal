@@ -6,7 +6,6 @@ import {
   Mail,
   Lock,
   User,
-  Zap,
   Activity,
   Eye,
   EyeOff,
@@ -67,7 +66,7 @@ export default function Register() {
       <div className="auth-left">
         <div className="auth-logo">
           <div className="auth-logo-icon">
-            <Zap size={22} className="auth-logo-svg" />
+            <img src="/brand-logo.png" alt="" aria-hidden="true" draggable="false" />
           </div>
           <div className="auth-logo-text">
             <span className="auth-logo-name">K6 <span className="auth-logo-highlight">PORTAL</span></span>

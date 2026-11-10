@@ -114,11 +114,12 @@ input, select, textarea, button {
   background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
 }
 .sb-brand-icon {
-  width: 34px; height: 34px; background: var(--brand-grad);
+  width: 34px; height: 34px; background: transparent;
   border-radius: 9px; display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 14px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.3);
+  overflow: hidden;
   flex-shrink: 0;
 }
+.sb-brand-icon img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .sb-brand-text { line-height: 1.25; }
 .sb-brand-name { font-size: 14px; font-weight: 700; color: var(--tx); letter-spacing: -0.2px; }
 .sb-brand-name span { color: var(--brand-l); }
@@ -504,7 +505,8 @@ input[type="checkbox"]:checked::after {
 .auth-left::before { content: ''; position: absolute; top: -100px; left: -100px; width: 480px; height: 480px; background: radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%); pointer-events: none; }
 
 .auth-logo { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
-.auth-logo-icon { width: 40px; height: 40px; background: var(--brand); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(99,102,241,0.4); }
+.auth-logo-icon { width: 40px; height: 40px; background: transparent; border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.auth-logo-icon img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .auth-logo-name { font-size: 17px; font-weight: 700; color: var(--tx); }
 .auth-logo-name span { color: var(--brand-l); }
 

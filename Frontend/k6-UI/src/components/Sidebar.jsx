@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, FilePlus2, PlayCircle,
-  BarChart3, LogOut, Zap, Radio, Sun, Moon,
+  BarChart3, LogOut, Radio, Sun, Moon,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import API from "../services/api";
@@ -63,7 +63,7 @@ export default function Sidebar() {
       {/* ── Brand ── */}
       <div className="sb-brand" onClick={() => navigate("/dashboard")}>
         <div className="sb-brand-icon">
-          <Zap size={18} color="#fff" />
+          <img src="/brand-logo.png" alt="" aria-hidden="true" draggable="false" />
         </div>
         <div className="sb-brand-text">
           <div className="sb-brand-name">K6 <span>Portal</span></div>
